@@ -1,6 +1,9 @@
 #import rich
 import pandas as pd
 import sqlite3
+import dateutil
+import datetime
+import re
 
 #https://stackoverflow.com/questions/37288421/how-to-plot-a-chart-in-the-terminal cool idea for future implementation; output a graph/date time chart through the terminal, though could also just generate and output them like normal.
 
@@ -23,7 +26,11 @@ def initialize():
     complete - integer, cannot be null. 0 for incomplete, 1 for complete. Can add other numbers for different categorizations; could also use text but brain small and it makes it a bit more complicated.
     due_date - text...? Could also be DATETIME, though it would require user correction because no one is going to put seconds for their todos.
     priority - integer. cannot be null, just add 0 for cases without priority. Could also be text. 0-5 in terms of how to prioritize it, should affect the order in which things are displayed in the actual list. ie: sort by due date, then sub sort by priority value.
+          -For this, 0 = No priority, 1= Very Low priority, 2 = Low Priority, 3 = Medium Priority, 4 = High Priority, 5 = Very High Priority.
     completion_date - text. same boat as due_date.
+
+    potential additon:
+    date added: allows to track how fast you complete tasked based on when you put them in. might be useful?
     """
 
     tableCreationString = '''CREATE TABLE IF NOT EXISTS tasks (
@@ -41,6 +48,17 @@ def initialize():
     df = pd.read_sql("SELECT id, name, complete, due_date, priority, completion_date FROM tasks", connection, parse_dates=["due_date", "completion_date"])
     #close sql database call
     connection.close()
+
+    '''
+    Note: Using a pandas dataframe isn't the most needed thing at this point in time.
+    A lot of this could just be done through pure SQL calls, and modifying a dictionary and then pushing the changes.
+    It would make analyzing and parsing the database easier, but that sort of thing could also just be done by me
+    (it does feel a tad wasteful to use two databases at the same time, when they're identical.)
+
+    The other alternative is that there's a specfic save function that writes all changes out.
+    This could work, but means that it's on the program or the user to make sure that everything saves/works out before they quit the program.
+
+    '''
     return df
 
 def usrInput():
@@ -49,16 +67,51 @@ def usrInput():
     '''
     inputStr = input()
     if(inputStr == "new" or inputStr == "n"):
-        #function to make new task
-        return
+        createTask()
+        #print("n")
+        return True
     if(inputStr == "c"or inputStr == "complete"): #change to be "first few characters = c"
         #truncate input to just the task to complete and link it up
         #maybe do this??? https://stackoverflow.com/questions/52143468/python-tab-autocompletion-in-script
-        return
+        completeTask()
+        #print("C")
+        return True
+    if(inputStr == "e" or inputStr == "edit"):
+        #print("E")
+        editTask()
+        return True
+    if(inputStr == "q" or inputStr == "quit"):
+        #print("Q")
+        return False
+    if(inputStr == "h" or inputStr == "help"):
+        print("help")
+        return True
     else:
        print("Input not recognized, please try again")
        usrInput()
-    return 
+    return
+
+def editTask():
+    '''
+    Function to edit existing task and change or add parts to it.
+    '''
+    #update values for specified parts: https://www.sqlitetutorial.net/sqlite-update/
+    '''
+    Methodology: 
+    1 Obtain values from SQL for a specific task (will need to figure out how to search efficiently and deal with duplicate results later) 
+    2 Ask for what to change in menu, with options for name, due date, completed status, completed date, and priority
+    Also have a "complete" option
+    Make this a while loop until complete option is selected.
+    3 Update values for task, exit loop and function
+
+    To research: indexing SQL database efficiently
+    for multiple tasks, maybe compare length of dataframe containing results from that index, and then
+    run a for loop through each of them, displaying each name + corresponding index number in df
+
+    then have input be the index number of the task to update and then select that one and start the while loop
+    '''
+    return
+    
 
 def completeTask():
     '''
@@ -72,23 +125,104 @@ def createTask():
     '''
     Function to create a new task in the SQL database. Takes in multiple arguments and then uses the insert keyword to create a new row in the SQL database. Additionally, should add a new row to the pandas library.
     '''
-    #Insert documentation: https://www.sqlitetutorial.net/sqlite-python/insert/
-    #pandas concat documentation: https://pandas.pydata.org/docs/reference/api/pandas.concat.html#pandas.concat
-    #use https://stackoverflow.com/questions/41217310/get-index-of-a-row-of-a-pandas-dataframe-as-an-integer to return index as an integer
-
+    #Get Task Name
+    print("Please type the task to complete and press enter.")
+    taskName = input()
+   
+    #Get date: Loop until valid date or empty line
+    while True:
+        try:
+            print("Please type the date the task is due in MM/DD/YY format, and press enter.")
+            print("If there is no due date, simply press enter.")
+            taskDate = input()
+             #Parse the string, make sure that it's in the correct format. No need to use stptime, dateutil works great
+            #to implement wild card, use dateutil as suggested in (https://stackoverflow.com/questions/1258199/python-datetime-strptime-wildcard)
+            taskDate = dateutil.parser.parse(taskDate)
+            today = datetime.datetime.today()
+            #documentation for string formatting: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
+            #If there's a better way of doing this I'd gladly just do that instead because this is sort of ugly.
+            if (taskDate.strftime("%Y")==today.strftime("%Y")):
+                if(taskDate.strftime("%d")=="01" or taskDate.strftime("%d")=="21" or taskDate.strftime("%d")=="31"):
+                    print(taskDate.strftime("Task due date set as: %A, %B %dst."))
+                elif(taskDate.strftime("%d")=="02" or taskDate.strftime("%d")=="22"):
+                    print(taskDate.strftime("Task due date set as: %A, %B %dnd."))
+                elif(taskDate.strftime("%d")=="03" or taskDate.strftime("%d")=="23"):
+                    print(taskDate.strftime("Task due date set as: %A, %B %drd."))
+                else:
+                    print(taskDate.strftime("Task due date set as: %A, %B %dth."))
+            else:
+                if(taskDate.strftime("%d")=="01" or taskDate.strftime("%d")=="21" or taskDate.strftime("%d")=="31"):
+                    print(taskDate.strftime("Task due date set as: %B %dst, %Y"))
+                elif(taskDate.strftime("%d")=="02" or taskDate.strftime("%d")=="22"):
+                    print(taskDate.strftime("Task due date set as: %B %drd, %Y"))
+                elif(taskDate.strftime("%d")=="03" or taskDate.strftime("%d")=="23"):
+                    print(taskDate.strftime("Task due date set as: %B %dnd, %Y"))
+                else:
+                    print(taskDate.strftime("Task due date set as: %B %dth, %Y"))
+        except:
+            #check if it's blank because there is no due date.
+            if taskDate == "":
+                print("No task due date set.")
+                break
+            #maybe add a check so you can quit out of this part?
+            #just boot you back to the main view.
+            print("That date doesn't seem correct. Please try again.")
+            continue
+        break
+    #Get priority of task. Can be left blank. Will compare to regex, [1-5].
+    #If there's an error, ask user to repeat putting it in.
+    while True:
+        print("Please input the priority of the task from 1-5. and press enter.")
+        print("If you do not want to set a priority level, simply press enter.")
+        priorityLevel = input()
+        if(priorityLevel == ''):
+            print("No priority level set.")
+            priorityLevel = 0
+            break
+        try:
+            if(re.match(r"[1-5]", priorityLevel)!=None):
+                priorityLevel = int(priorityLevel)
+                match priorityLevel:
+                    case 1:
+                        print("Priority level set as Very Low Priority.")
+                        break
+                    case 2:
+                        print("Priority level set as Low Priority.")
+                        break
+                    case 3:
+                        print("Priority level set as Medium Priority.")
+                        break
+                    case 4:
+                        print("Priority level set as High Priority.")
+                        break
+                    case 5:
+                        print("Priority level set as Very High Priority.")
+                        break
+            else:
+                print("Sorry, that doesn't appear to be correct. Please try again.")
+        except:
+            print("Sorry, that doesn't appear to be correct. Please try again.")
+            continue
+    #loop end
+    #Now, collect all data and put it into corresponding things.
+    print("Task Name: ", taskName, ", Due Date:", taskDate,", Priority Level: ", priorityLevel)
+    #Implement Adding rows here.
+    print("Task Added. Returning to main view.")
     return
 
 def mainView():
     '''
     Main overview of the program. In end result, should display a table of tasks to complete, along with other statistics to be decided (total tasks completed/completed in a week, completed task streak?, ect.)
+    Make sure overdue tasks are in their own category at the top.
     '''
-    while True:
+    continueFlag = True
+    while continueFlag == True:
         print("main view goes here :3")
         #need to figure out how to actually get the main view to look cool
         print("cml input: -h for help")
         #run input function
-        usrInput()
+        continueFlag = usrInput()
     return
 
 pandaDF = initialize()
-#mainView() <- don't run this yet, test the SQL functionality first.
+mainView()
