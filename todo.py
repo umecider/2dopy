@@ -4,7 +4,6 @@ import sqlite3
 import dateutil
 import datetime
 import re
-from numpy import nan
 
 #https://stackoverflow.com/questions/37288421/how-to-plot-a-chart-in-the-terminal cool idea for future implementation; output a graph/date time chart through the terminal, though could also just generate and output them like normal.
 
@@ -21,7 +20,6 @@ def initialize():
     """
     Table Documention.
     see https://www.digitalocean.com/community/tutorials/sql-data-types for data type explanations.
-
     id - primary key, is the main indicator of each row. Cannot be name because of repeat tasks
     name - text, cannot be null. This is the task to be completed.
     complete - integer, cannot be null. 0 for incomplete, 1 for complete. Can add other numbers for different categorizations; could also use text but brain small and it makes it a bit more complicated.
@@ -29,18 +27,18 @@ def initialize():
     priority - integer. cannot be null, just add 0 for cases without priority. Could also be text. 0-5 in terms of how to prioritize it, should affect the order in which things are displayed in the actual list. ie: sort by due date, then sub sort by priority value.
           -For this, 0 = No priority, 1= Very Low priority, 2 = Low Priority, 3 = Medium Priority, 4 = High Priority, 5 = Very High Priority.
     completion_date - text. same boat as due_date.
-
     potential additon:
     date added: allows to track how fast you complete tasked based on when you put them in. might be useful?
     """
-
+#sql was wrong for this one: https://www.sqlitetutorial.net/sqlite-date/
+#need to then parse the imported data to datetime objects
     tableCreationString = '''CREATE TABLE IF NOT EXISTS tasks (
-    id integer PRIMARY KEY,
-    name text NOT NULL,
-    complete integer NOT NULL,
-    due_date text,
-    priority integer NOT NULL,
-    completion_date text
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    complete INTEGER NOT NULL,
+    due_date TEXT,
+    priority INTEGER NOT NULL,
+    completion_date TEXT
     )
     '''
     cursor.execute(tableCreationString)
@@ -49,6 +47,11 @@ def initialize():
     df = pd.read_sql("SELECT id, name, complete, due_date, priority, completion_date FROM tasks", connection, parse_dates=["due_date", "completion_date"])
     #close sql database call
     connection.close()
+    #convert string to datetime
+    #https://stackoverflow.com/questions/26763344/convert-pandas-column-to-datetime
+    #using format as reccommended by https://stackoverflow.com/questions/26763344/convert-pandas-column-to-datetime/75277434#75277434
+    df["due_date"] = pd.to_datetime(df["due_date"], format = "%Y-%m-%d %H:%M:%S")
+    df["completion_date"] = pd.to_datetime(df["completion_date"], format = "%Y-%m-%d %H:%M:%S")
 
     '''
     note: Will be using pandas.DataFrame object for editing and changing values.
@@ -63,25 +66,35 @@ def usrInput():
     Checks the user's input. Does not have any arguments, and could be merged with mainView. If the input matches with known strings (or some shortened versions) then it will call a function related to them (ie: create a task, update a task, ect.)
     '''
     inputStr = input()
+    #done
     if(inputStr == "new" or inputStr == "n"):
         createTask()
         #print("n")
         return True
+    #incomplete
     if(inputStr == "c"or inputStr == "complete"): #change to be "first few characters = c"
         #truncate input to just the task to complete and link it up
         #maybe do this??? https://stackoverflow.com/questions/52143468/python-tab-autocompletion-in-script
         completeTask()
         #print("C")
         return True
+    #incomplete
     if(inputStr == "e" or inputStr == "edit"):
         #print("E")
         editTask()
         return True
+    #incomplete
     if(inputStr == "q" or inputStr == "quit"):
         #print("Q")
         return False
+    #incomplete
     if(inputStr == "h" or inputStr == "help"):
         print("help")
+        return True
+    if(inputStr == "s" or inputStr == "save"):
+        updateSQL(pandaDF)
+        pandaDF["new"] = 0
+        pandaDF["changed"] = 0
         return True
     else:
        print("Input not recognized, please try again")
@@ -101,6 +114,8 @@ def editTask():
     Make this a while loop until complete option is selected.
     3 Update values for task, exit loop and function
     '''
+
+
     return
     
 
@@ -153,7 +168,7 @@ def createTask():
         except:
             #check if it's blank because there is no due date.
             if taskDate == "":
-                taskDate = nan
+                taskDate = None
                 print("No task due date set.")
                 break
             #maybe add a check so you can quit out of this part?
@@ -203,12 +218,54 @@ def createTask():
     #Now, collect all data and put it into corresponding things.
     print("Task Name: ", taskName, ", Due Date:", taskDate,", Priority Level: ", priorityLevel)
     idNumber = len(pandaDF) + 1
-    #got weird inconsistent NAN values when using pd.NA so I used numpy NaN as suggested from: https://stackoverflow.com/questions/26805445/adding-null-values-to-a-pandas-dataframe
-    pandaDF.loc[idNumber] = [idNumber, taskName, 0, taskDate, priorityLevel, nan]
+    pandaDF.loc[idNumber] = [idNumber, taskName, 0, taskDate, priorityLevel, None, 0, 1]
     print("Task Added. Returning to main view.")
     return
+
 def updateSQL(df):
     #Updates SQL from the dataframe.
+    changedRows = df[df["changed"] == 1]
+    newRows = df[df["new"] == 1]
+    connection = sqlite3.connect("tasklist.db")
+    curs = connection.cursor()
+    print(changedRows)
+    print(newRows)
+    for x in range(len(changedRows)):
+        #convert datetime into strings (sqlite.... why can't you be normal about this one)
+        tempDate = changedRows.iloc[x]["due_date"]
+        tempDate2 = changedRows.iloc[x]["completion_date"]
+        #https://stackoverflow.com/questions/7588511/format-a-datetime-into-a-string-with-milliseconds
+        strDueDate = tempDate.strftime("%Y-%M-%D %H:%M:%S.%f")[:-3]
+        strCompletionDate = tempDate2.strftime("%Y-%M-%D %H:%M:%S.%f")[:-3]
+        #set values and set the SQL request string
+        values = (str(changedRows.iloc[x]["name"]), int(changedRows.iloc[x]["complete"]), strDueDate, int(changedRows.iloc[x]["priority"]), strCompletionDate, int(changedRows.iloc[x]["id"]))
+        updateString = ''' UPDATE tasks
+        SET name = ?
+            due_date = ?
+            complete = ?
+            due_date = ?
+            priority = ?
+            completion_date = ?
+        WHERE id = ?
+        '''
+        curs.execute(updateString, values)
+    for y in range(len(newRows)):
+        tempDate3 = newRows.iloc[y]["due_date"]
+        if (tempDate3 != pd.NaT):
+            strNewDate = tempDate3.strftime("%Y-%M-%D")
+        else:
+            strNewDate = None
+        tempDate4 = newRows.iloc[y]["completion_date"]
+        if (tempDate4 != None):
+            strNewCompletion = tempDate4.strftime("%Y-%M-%D")
+        else:
+            strNewCompletion = None
+        newValues = (int(newRows.iloc[y]["id"]), str(newRows.iloc[y]["name"]), int(newRows.iloc[y]["complete"]), strNewDate, int(newRows.iloc[y]["priority"]), strNewCompletion)
+        insertString = ''' INSERT INTO tasks(id, name, complete, due_date, priority, completion_date)
+        VALUES(?,?,?,?,?,?)
+        '''
+        curs.execute(insertString, newValues)
+    connection.close()
     return
 
 def mainView():
@@ -220,10 +277,18 @@ def mainView():
     while continueFlag == True:
         print("main view goes here :3")
         #need to figure out how to actually get the main view to look cool
-        print("cml input: -h for help")
+        print("cml input: h for help")
         #run input function
         continueFlag = usrInput()
     return
 
 pandaDF = initialize()
+#implementing new column variable to cut down on how many rows the program will update
+#0 = not changed 1 = changed
+#only update changed values in database
+pandaDF["changed"] = 0
+#Implementing column variable to also flag when I need to use a different function to update the database.
+#0 = not new, 1 = new
+#if new need to add a row rather than update it.
+pandaDF["new"] = 0
 mainView()
