@@ -160,9 +160,9 @@ def createTask():
                 if(taskDate.strftime("%d")=="01" or taskDate.strftime("%d")=="21" or taskDate.strftime("%d")=="31"):
                     print(taskDate.strftime("Task due date set as: %B %dst, %Y"))
                 elif(taskDate.strftime("%d")=="02" or taskDate.strftime("%d")=="22"):
-                    print(taskDate.strftime("Task due date set as: %B %drd, %Y"))
-                elif(taskDate.strftime("%d")=="03" or taskDate.strftime("%d")=="23"):
                     print(taskDate.strftime("Task due date set as: %B %dnd, %Y"))
+                elif(taskDate.strftime("%d")=="03" or taskDate.strftime("%d")=="23"):
+                    print(taskDate.strftime("Task due date set as: %B %drd, %Y"))
                 else:
                     print(taskDate.strftime("Task due date set as: %B %dth, %Y"))
         except:
@@ -233,10 +233,18 @@ def updateSQL(df):
     for x in range(len(changedRows)):
         #convert datetime into strings (sqlite.... why can't you be normal about this one)
         tempDate = changedRows.iloc[x]["due_date"]
+        if(tempDate != pd.NaT):
+            strDueDate = tempDate.strftime("%Y-%M-%D")
+        else:
+            strDueDate = None
         tempDate2 = changedRows.iloc[x]["completion_date"]
+        if(tempDate2 != pd.NaT):
+            strCompletionDate = tempDate2.strftime("%Y-%M-%D")
+        else:
+            strCompletionDate = None
         #https://stackoverflow.com/questions/7588511/format-a-datetime-into-a-string-with-milliseconds
-        strDueDate = tempDate.strftime("%Y-%M-%D %H:%M:%S.%f")[:-3]
-        strCompletionDate = tempDate2.strftime("%Y-%M-%D %H:%M:%S.%f")[:-3]
+        
+        
         #set values and set the SQL request string
         values = (str(changedRows.iloc[x]["name"]), int(changedRows.iloc[x]["complete"]), strDueDate, int(changedRows.iloc[x]["priority"]), strCompletionDate, int(changedRows.iloc[x]["id"]))
         updateString = ''' UPDATE tasks
@@ -275,9 +283,9 @@ def mainView():
     '''
     continueFlag = True
     while continueFlag == True:
-        print("main view goes here :3")
+        print(pandaDF)
         #need to figure out how to actually get the main view to look cool
-        print("cml input: h for help")
+        print("terminal input: h for help")
         #run input function
         continueFlag = usrInput()
     return
