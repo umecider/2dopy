@@ -4,6 +4,7 @@ import sqlite3
 import dateutil
 import datetime
 import re
+from numpy import nan
 
 #https://stackoverflow.com/questions/37288421/how-to-plot-a-chart-in-the-terminal cool idea for future implementation; output a graph/date time chart through the terminal, though could also just generate and output them like normal.
 
@@ -50,14 +51,10 @@ def initialize():
     connection.close()
 
     '''
-    Note: Using a pandas dataframe isn't the most needed thing at this point in time.
-    A lot of this could just be done through pure SQL calls, and modifying a dictionary and then pushing the changes.
-    It would make analyzing and parsing the database easier, but that sort of thing could also just be done by me
-    (it does feel a tad wasteful to use two databases at the same time, when they're identical.)
-
-    The other alternative is that there's a specfic save function that writes all changes out.
-    This could work, but means that it's on the program or the user to make sure that everything saves/works out before they quit the program.
-
+    note: Will be using pandas.DataFrame object for editing and changing values.
+    When quitting application, values will then be written out to the SQL file.
+    Should write a way to add a new column to the dataframe, called "changed" for editing values
+    (that way we don't need to update all values, and just the ones that have been changed)
     '''
     return df
 
@@ -98,17 +95,11 @@ def editTask():
     #update values for specified parts: https://www.sqlitetutorial.net/sqlite-update/
     '''
     Methodology: 
-    1 Obtain values from SQL for a specific task (will need to figure out how to search efficiently and deal with duplicate results later) 
+    1 Obtain values from DataFrame for a specific task (will need to figure out how to search efficiently and deal with duplicate results later) 
     2 Ask for what to change in menu, with options for name, due date, completed status, completed date, and priority
     Also have a "complete" option
     Make this a while loop until complete option is selected.
     3 Update values for task, exit loop and function
-
-    To research: indexing SQL database efficiently
-    for multiple tasks, maybe compare length of dataframe containing results from that index, and then
-    run a for loop through each of them, displaying each name + corresponding index number in df
-
-    then have input be the index number of the task to update and then select that one and start the while loop
     '''
     return
     
@@ -162,6 +153,7 @@ def createTask():
         except:
             #check if it's blank because there is no due date.
             if taskDate == "":
+                taskDate = nan
                 print("No task due date set.")
                 break
             #maybe add a check so you can quit out of this part?
@@ -180,7 +172,11 @@ def createTask():
             priorityLevel = 0
             break
         try:
+            #Try regex for 1-5 in a string (and just one of them), and check that it doesn't return none
+            #(can't just have it equal true because re.match returns a match object)
             if(re.match(r"[1-5]", priorityLevel)!=None):
+                #convert priorityLevel to int and compare it to a switch case
+                #(convert to int because that's what the table takes in, makes it easier to sort)
                 priorityLevel = int(priorityLevel)
                 match priorityLevel:
                     case 1:
@@ -206,8 +202,13 @@ def createTask():
     #loop end
     #Now, collect all data and put it into corresponding things.
     print("Task Name: ", taskName, ", Due Date:", taskDate,", Priority Level: ", priorityLevel)
-    #Implement Adding rows here.
+    idNumber = len(pandaDF) + 1
+    #got weird inconsistent NAN values when using pd.NA so I used numpy NaN as suggested from: https://stackoverflow.com/questions/26805445/adding-null-values-to-a-pandas-dataframe
+    pandaDF.loc[idNumber] = [idNumber, taskName, 0, taskDate, priorityLevel, nan]
     print("Task Added. Returning to main view.")
+    return
+def updateSQL(df):
+    #Updates SQL from the dataframe.
     return
 
 def mainView():
