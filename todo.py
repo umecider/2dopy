@@ -44,7 +44,7 @@ def initialize():
     cursor.execute(tableCreationString)
     #create pandas DF from the sql database and return it. 
     #note: ID will be the same as the index in the dataframe. importing it and then replacing the dataframe index is probably the best route to take here. Unsure about it atm but still importing id
-    df = pd.read_sql("SELECT id, name, complete, due_date, priority, completion_date FROM tasks", connection, parse_dates=["due_date", "completion_date"])
+    df = pd.read_sql("SELECT id, name, complete, due_date, priority, completion_date FROM tasks", connection)
     #close sql database call
     connection.close()
     #convert string to datetime
@@ -118,7 +118,6 @@ def editTask():
 
     return
     
-
 def completeTask():
     '''
     Function that takes in a specific task, and then updates both dataframes (pandas and SQL table) with complete = true and the date/time at which it was completed.
@@ -138,7 +137,7 @@ def createTask():
     #Get date: Loop until valid date or empty line
     while True:
         try:
-            print("Please type the date the task is due in MM/DD/YY format, and press enter.")
+            print("Please type the date the task is due in MM/DD/YY format, and the time it's due and press enter.")
             print("If there is no due date, simply press enter.")
             taskDate = input()
              #Parse the string, make sure that it's in the correct format. No need to use stptime, dateutil works great
@@ -149,22 +148,22 @@ def createTask():
             #If there's a better way of doing this I'd gladly just do that instead because this is sort of ugly.
             if (taskDate.strftime("%Y")==today.strftime("%Y")):
                 if(taskDate.strftime("%d")=="01" or taskDate.strftime("%d")=="21" or taskDate.strftime("%d")=="31"):
-                    print(taskDate.strftime("Task due date set as: %A, %B %dst."))
+                    print(taskDate.strftime("Task due date set as: %A, %B %dst at %I:%M %p."))
                 elif(taskDate.strftime("%d")=="02" or taskDate.strftime("%d")=="22"):
-                    print(taskDate.strftime("Task due date set as: %A, %B %dnd."))
+                    print(taskDate.strftime("Task due date set as: %A, %B %dnd at %I:%M %p."))
                 elif(taskDate.strftime("%d")=="03" or taskDate.strftime("%d")=="23"):
-                    print(taskDate.strftime("Task due date set as: %A, %B %drd."))
+                    print(taskDate.strftime("Task due date set as: %A, %B %drd at %I:%M %p."))
                 else:
-                    print(taskDate.strftime("Task due date set as: %A, %B %dth."))
+                    print(taskDate.strftime("Task due date set as: %A, %B %dth at %I:%M %p."))
             else:
                 if(taskDate.strftime("%d")=="01" or taskDate.strftime("%d")=="21" or taskDate.strftime("%d")=="31"):
-                    print(taskDate.strftime("Task due date set as: %B %dst, %Y"))
+                    print(taskDate.strftime("Task due date set as: %B %dst, %Y at %I:%M %p."))
                 elif(taskDate.strftime("%d")=="02" or taskDate.strftime("%d")=="22"):
-                    print(taskDate.strftime("Task due date set as: %B %dnd, %Y"))
+                    print(taskDate.strftime("Task due date set as: %B %dnd, %Y at %I:%M %p."))
                 elif(taskDate.strftime("%d")=="03" or taskDate.strftime("%d")=="23"):
-                    print(taskDate.strftime("Task due date set as: %B %drd, %Y"))
+                    print(taskDate.strftime("Task due date set as: %B %drd, %Y at %I:%M %p."))
                 else:
-                    print(taskDate.strftime("Task due date set as: %B %dth, %Y"))
+                    print(taskDate.strftime("Task due date set as: %B %dth, %Y at %I:%M %p."))
         except:
             #check if it's blank because there is no due date.
             if taskDate == "":
@@ -176,8 +175,20 @@ def createTask():
             print("That date doesn't seem correct. Please try again.")
             continue
         break
-    #Get priority of task. Can be left blank. Will compare to regex, [1-5].
-    #If there's an error, ask user to repeat putting it in.
+    #Get time that it is due if a date is set.
+    # if(taskDate != None):
+    #     while True:
+    #         try:
+    #             print("Please type the time that the task is due.")
+    #             timeInput = input()
+    #             print(dateutil.parser.parse(taskDate + timeInput))
+    #         except:
+    #             if timeInput == '':
+    #                 print("No time set.")
+    #                 break
+    #             print("That time doesn't seem to be valid.")
+    # #Get priority of task. Can be left blank. Will compare to regex, [1-5].
+    # #If there's an error, ask user to repeat putting it in.
     while True:
         print("Please input the priority of the task from 1-5. and press enter.")
         print("If you do not want to set a priority level, simply press enter.")
@@ -234,12 +245,12 @@ def updateSQL(df):
         #convert datetime into strings (sqlite.... why can't you be normal about this one)
         tempDate = changedRows.iloc[x]["due_date"]
         if(tempDate != pd.NaT):
-            strDueDate = tempDate.strftime("%Y-%M-%D")
+            strDueDate = tempDate.strftime("%Y-%m-%d %H:%M:%S")
         else:
             strDueDate = None
         tempDate2 = changedRows.iloc[x]["completion_date"]
         if(tempDate2 != pd.NaT):
-            strCompletionDate = tempDate2.strftime("%Y-%M-%D")
+            strCompletionDate = tempDate2.strftime("%Y-%m-%d %H:%M:%S")
         else:
             strCompletionDate = None
         #https://stackoverflow.com/questions/7588511/format-a-datetime-into-a-string-with-milliseconds
@@ -260,19 +271,20 @@ def updateSQL(df):
     for y in range(len(newRows)):
         tempDate3 = newRows.iloc[y]["due_date"]
         if (tempDate3 != pd.NaT):
-            strNewDate = tempDate3.strftime("%Y-%M-%D")
+            strNewDate = tempDate3.strftime("%Y-%m-%d %H:%M:%S")
         else:
             strNewDate = None
         tempDate4 = newRows.iloc[y]["completion_date"]
         if (tempDate4 != None):
-            strNewCompletion = tempDate4.strftime("%Y-%M-%D")
+            strNewCompletion = tempDate4.strftime("%Y-%m-%d %H:%M:%S")
         else:
             strNewCompletion = None
         newValues = (int(newRows.iloc[y]["id"]), str(newRows.iloc[y]["name"]), int(newRows.iloc[y]["complete"]), strNewDate, int(newRows.iloc[y]["priority"]), strNewCompletion)
-        insertString = ''' INSERT INTO tasks(id, name, complete, due_date, priority, completion_date)
+        insertString = ''' INSERT INTO tasks('id', 'name', 'complete', 'due_date', 'priority', 'completion_date')
         VALUES(?,?,?,?,?,?)
         '''
         curs.execute(insertString, newValues)
+    connection.commit()
     connection.close()
     return
 
@@ -283,7 +295,10 @@ def mainView():
     '''
     continueFlag = True
     while continueFlag == True:
-        print(pandaDF)
+        if len(pandaDF) != 0:
+            print(pandaDF)
+        else:
+            print("There are no tasks at the moment. Why not add one? :)")
         #need to figure out how to actually get the main view to look cool
         print("terminal input: h for help")
         #run input function
