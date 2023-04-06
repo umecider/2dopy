@@ -66,6 +66,8 @@ def usrInput():
     Checks the user's input. Does not have any arguments, and could be merged with mainView. If the input matches with known strings (or some shortened versions) then it will call a function related to them (ie: create a task, update a task, ect.)
     '''
     inputStr = input()
+    #standardize input
+    inputStr = inputStr.rstrip().lower()
     #done
     if(inputStr == "new" or inputStr == "n"):
         createTask()
@@ -89,7 +91,19 @@ def usrInput():
         return False
     #incomplete
     if(inputStr == "h" or inputStr == "help"):
-        print("help")
+        print("List of commands:")
+        print("You can just input the first letter of each command as well.")
+        commandList = [
+            "New: Create a new task.",
+            "Edit: Edit details of a task.",
+            "Complete: Mark a task as complete.",
+            "Save: Manually save the tasks to the database.",
+            "Help: Display this message.",
+            "Quit: Exit the program. WILL NOT AUTOMATICALLY SAVE."
+        ]
+        #iterate through command list and print each string
+        for x in commandList:
+            print(x)
         return True
     if(inputStr == "s" or inputStr == "save"):
         updateSQL(pandaDF)
@@ -117,7 +131,11 @@ def editTask():
     while True:
         try:
             print("Please input the task to edit the data of and press enter.")
+            print("If you would like to return to the main menu, please input 'quit'")
             idNumber = input()
+            #quit to menu
+            if(idNumber.rstrip().lower() == "quit" or idNumber.rstrip().lower() == 'q'):
+                return
             if(re.match(r"\d+", idNumber) != None):
                 while True:
                     print(pandaDF[pandaDF["id"] == int(idNumber)])
@@ -209,8 +227,7 @@ def getDate():
                 print("No task due date set.")
                 break
             if taskDate == "quit" or taskDate == "q":
-                taskDate == "quit"
-                break
+                return "quit"
             #maybe add a check so you can quit out of this part?
             #just boot you back to the main view.
             print("That date doesn't seem correct. Please try again.")
@@ -226,8 +243,8 @@ def prioritySet():
             print("No priority level set.")
             priorityLevel = 0
             break
-        if(priorityLevel == "quit"):
-            return priorityLevel
+        if(priorityLevel.rstrip().lower() == "quit" or priorityLevel.rstrip().lower() == 'q'):
+            return "quit"
         try:
             #Try regex for 1-5 in a string (and just one of them), and check that it doesn't return none
             #(can't just have it equal true because re.match returns a match object)
@@ -262,11 +279,18 @@ def completeTask():
     '''
     Function that takes in a specific task, and then updates both dataframes (pandas and SQL table) with complete = true and the date/time at which it was completed.
     '''
+    #main loop to get the ID number
     while True:
         print("Please input the task to be completed and press enter.")
+        print("If you would like to return to the previous menu, please input 'quit'")
         toComplete = input()
+        #exit loop
+        if(toComplete.rstrip().lower() == "quit" or toComplete.rstrip().lower() == 'q'):
+           return
+        #check for only numbers
         if(re.match(r"\d+", toComplete) != None):
             #solution for getting index as an int is https://stackoverflow.com/questions/41217310/get-index-of-a-row-of-a-pandas-dataframe-as-an-integer
+            #try to find id number in the dataframe
             completedIndex = pandaDF[pandaDF["id"] == int(toComplete)].index.item()
             #for df.at functionality: https://stackoverflow.com/questions/13842088/set-value-for-particular-cell-in-pandas-dataframe-using-index
             pandaDF.at[completedIndex, "complete"] = 1
@@ -285,27 +309,18 @@ def createTask():
     '''
     #Get Task Name
     print("Please type the name of the task to create and press enter.")
+    print("If you'd like to return to the main view, just input 'quit' with no other characters.")
     taskName = input()
-   
+    if(taskName.rstrip() == 'quit' or taskName.rstrip() == "q"):
+        print("Exiting to menu...")
+        return
     #Get date: Loop until valid date or empty line
     taskDate = getDate()
     if taskDate == "quit":
         return
-    #Get time that it is due if a date is set.
-    # if(taskDate != None):
-    #     while True:
-    #         try:
-    #             print("Please type the time that the task is due.")
-    #             timeInput = input()
-    #             print(dateutil.parser.parse(taskDate + timeInput))
-    #         except:
-    #             if timeInput == '':
-    #                 print("No time set.")
-    #                 break
-    #             print("That time doesn't seem to be valid.")
-    # #Get priority of task. Can be left blank. Will compare to regex, [1-5].
-    # #If there's an error, ask user to repeat putting it in.
     priorityLevel = prioritySet()
+    if(priorityLevel == 'quit'):
+        return
     #Now, collect all data and put it into corresponding things.
     print("Task Name: ", taskName, ", Due Date:", taskDate,", Priority Level: ", priorityLevel)
     idNumber = len(pandaDF) + 1
@@ -377,7 +392,8 @@ def mainView():
         else:
             print("There are no tasks at the moment. Why not add one? :)")
         #need to figure out how to actually get the main view to look cool
-        print("terminal input: h for help")
+        print("Please input the command you would like to perform, and press enter.")
+        print("(Type 'help' for a list of commands!)")
         #run input function
         continueFlag = usrInput()
     return
