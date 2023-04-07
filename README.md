@@ -4,6 +4,12 @@
 This is a simple project I've been working on to create a simple to-do program that runs in the terminal, without a GUI. The main purpose of this was to get used to creating and managing an SQL Database, along with refreshing my pandas.DataFrame manipulation.
 
 ## Usage
+First, make sure your pyton environment has the following libraries installed:
+- pandas
+- python-dateutil
+- sqlite3
+If you do not have any of these, you can install them easily using pip.
+
 To use this program, open a terminal and navigate to the folder where the program is located. Then, simply run the program with your local python directory. The program will create a new local SQL database in the same location. Commands are input either by inputting the first letter of the command, or the whole command. The following commands are implemented: 
 
 - Help: Displays a list of all commmands.
