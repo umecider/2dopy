@@ -1,9 +1,14 @@
-#import rich
+#from rich import print
+#from rich.table import Table 
+#from rich_tools import df_to_table
 import pandas as pd
 import sqlite3
 import dateutil
 import datetime
 import re
+#using tabulate is temporary, hopefully. I'll need to nearly completely rework the mainView function
+#and i don't want to do that at the moment. This beautifies the output, to a degree. the rest will be done through rich
+from tabulate import tabulate
 
 #https://stackoverflow.com/questions/37288421/how-to-plot-a-chart-in-the-terminal cool idea for future implementation; output a graph/date time chart through the terminal, though could also just generate and output them like normal.
 
@@ -58,7 +63,7 @@ def initialize():
     When quitting application, values will then be written out to the SQL file.
     Should write a way to add a new column to the dataframe, called "changed" for editing values
     (that way we don't need to update all values, and just the ones that have been changed)
-    '''
+    ''' 
     return df
 
 def usrInput():
@@ -311,7 +316,7 @@ def createTask():
     print("Please type the name of the task to create and press enter.")
     print("If you'd like to return to the main view, just input 'quit' with no other characters.")
     taskName = input()
-    if(taskName.rstrip() == 'quit' or taskName.rstrip() == "q"):
+    if(taskName.rstrip() == 'quit' or taskName.rstrip() == "q" or taskName.rstrip() == ""):
         print("Exiting to menu...")
         return
     #Get date: Loop until valid date or empty line
@@ -324,7 +329,8 @@ def createTask():
     #Now, collect all data and put it into corresponding things.
     print("Task Name: ", taskName, ", Due Date:", taskDate,", Priority Level: ", priorityLevel)
     idNumber = len(pandaDF) + 1
-    pandaDF.loc[idNumber] = [idNumber, taskName, 0, taskDate, priorityLevel, None, 0, 1]
+    index = len(pandaDF)
+    pandaDF.loc[index] = [idNumber, taskName, 0, taskDate, priorityLevel, None, 0, 1]
     print("Task Added. Returning to main view.")
     return
 
@@ -338,12 +344,12 @@ def updateSQL(df):
     #print(newRows)
     for y in range(len(newRows)):
         tempDate3 = newRows.iloc[y]["due_date"]
-        if (tempDate3 != pd.NaT and tempDate3 != None):
+        if (type(tempDate3) != type(pd.NaT) and tempDate3 != None):
             strNewDate = tempDate3.strftime("%Y-%m-%d %H:%M:%S")
         else:
             strNewDate = None
         tempDate4 = newRows.iloc[y]["completion_date"]
-        if (tempDate4 != None and tempDate4 != pd.NaT):
+        if (tempDate4 != None and type(tempDate4) != type(pd.NaT)):
             strNewCompletion = tempDate4.strftime("%Y-%m-%d %H:%M:%S")
         else:
             strNewCompletion = None
@@ -355,12 +361,12 @@ def updateSQL(df):
     for x in range(len(changedRows)):
         #convert datetime into strings (sqlite.... why can't you be normal about this one)
         tempDate = changedRows.iloc[x]["due_date"]
-        if(tempDate != pd.NaT and tempDate != None):
+        if(type(tempDate) != type(pd.NaT) and tempDate != None):
             strDueDate = tempDate.strftime("%Y-%m-%d %H:%M:%S")
         else:
             strDueDate = None
         tempDate2 = changedRows.iloc[x]["completion_date"]
-        if(tempDate2 != pd.NaT and tempDate2 != None):
+        if(type(tempDate2) != type(pd.NaT) and tempDate2 != None):
             strCompletionDate = tempDate2.strftime("%Y-%m-%d %H:%M:%S")
         else:
             strCompletionDate = None
@@ -384,13 +390,34 @@ def mainView():
     '''
     Main overview of the program. In end result, should display a table of tasks to complete, along with other statistics to be decided (total tasks completed/completed in a week, completed task streak?, ect.)
     Make sure overdue tasks are in their own category at the top.
+    
+    TO-DO:
+    - truncate. 8 tasks makes this unreadable (in vscode term tbf).
+       - truncate to like, 5 by default and after that show lists? could definetly be implemented alongside rich, potentially
+       - general game plan is see the length, if >5 then convert into a list and only show index 0:4, and display something like "Page 1 out of (n/5). Please input page # to jump to that page."
+       - this sucks and will probably cause some task anxiety though
+          - maybe just showing a daily list could be good but what if there aren't due dates (sorting by priority works but is a smidge lame)
+          - just showing the daily list (or X tasks) is a good alternative but should be a flag (user settings file or something, probably not... default?)
+             - maybe it's just me but I want to reduce the number of inputs. seeing tasks should be a (mostly) 1 input thing. KISS and all that.
+    - change table to only show completed tasks for the day. Maybe a running total of completed tasks can take the spot
+    - change order of names in the table (name, priority, due date, completed), could argue for due date first but i'm not sure
+       - just run a conditional statement to remove all rows with a date in the past
+    - implement rich: will need to change how the data is passed into this main veiw, as it runs on it's own form of tables.
+       - or something like that, printing the pandas table caused an infinite recursion which was funny but not useful
+       - maybe pass the columns in as lists?
+    - strikethrough text the finished tasks? might help a lot with readability, moreso than an emoji.
     '''
+
     continueFlag = True
     while continueFlag == True:
-        if len(pandaDF) != 0:
-            print(pandaDF.sort_values(["due_date", "priority"], ascending=[True, False]))
-        else:
+        if len(pandaDF) == 0:
             print("There are no tasks at the moment. Why not add one? :)")
+        else:
+            displayTasks = pd.DataFrame(pandaDF.sort_values(["due_date", "priority"], ascending=[True, False]))
+            #change - remove completion date because we don't need it in this view.
+            displayTasks.drop(columns = ["changed", "new", "completion_date"], inplace = True)
+            displayTasks.set_index("id", inplace=True)
+            print(tabulate(displayTasks, ["#","Task Name", "Completed?", "Due Date", "Priority Level"], tablefmt = "rounded_grid", numalign="center"))
         #need to figure out how to actually get the main view to look cool
         print("Please input the command you would like to perform, and press enter.")
         print("(Type 'help' for a list of commands!)")
@@ -407,4 +434,5 @@ pandaDF["changed"] = 0
 #0 = not new, 1 = new
 #if new need to add a row rather than update it.
 pandaDF["new"] = 0
+
 mainView()
