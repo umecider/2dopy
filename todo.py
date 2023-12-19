@@ -135,8 +135,8 @@ def editTask():
     '''
     while True:
         try:
-            print("Please input the task to edit the data of and press enter.")
-            print("If you would like to return to the main menu, please input 'quit'")
+            print("Please type the ID Number of the task you would like to edit.")
+            print("If you would like to return to the main menu, please type 'quit'")
             idNumber = input()
             #quit to menu
             if(idNumber.rstrip().lower() == "quit" or idNumber.rstrip().lower() == 'q'):
@@ -165,7 +165,7 @@ def editTask():
                             pandaDF.at[index,"changed"] = 1
                         case "complete":
                             while True:
-                                print("Please input 0 for not complete, and 1 for complete.")
+                                print("Please type 0 for not complete, and 1 for complete.")
                                 completionBinary = input()
                                 if(re.match(r"[0-1]", completionBinary) !=0):
                                     completionBinary = int(completionBinary)
@@ -194,7 +194,7 @@ def getDate():
     while True:
         try:
             print("Please type the date the task is due in MM/DD/YY format, and the time it's due and press enter.")
-            print("If you'd like to return to the previous menu, please input 'quit' and press enter.")
+            print("If you'd like to return to the previous menu, please type 'quit' and press enter.")
             print("If there is no due date, simply press enter.")
             taskDate = input()
              #Parse the string, make sure that it's in the correct format. No need to use stptime, dateutil works great
@@ -240,9 +240,9 @@ def getDate():
 
 def prioritySet():
     while True:
-        print("Please input the priority of the task from 1-5. and press enter.")
+        print("Please type the priority of the task from 1-5. and press enter.")
         print("If you do not want to set a priority level, simply press enter.")
-        print("If you'd like to go back to the previous menu, please input 'quit'.")
+        print("If you'd like to go back to the previous menu, please type 'quit'.")
         priorityLevel = input()
         if(priorityLevel == ''):
             print("No priority level set.")
@@ -286,8 +286,8 @@ def completeTask():
     '''
     #main loop to get the ID number
     while True:
-        print("Please input the task to be completed and press enter.")
-        print("If you would like to return to the previous menu, please input 'quit'")
+        print("Please type the ID Number of the task to be completed and press enter.")
+        print("If you would like to return to the previous menu, please type 'quit'")
         toComplete = input()
         #exit loop
         if(toComplete.rstrip().lower() == "quit" or toComplete.rstrip().lower() == 'q'):
@@ -391,38 +391,27 @@ def mainView():
     Main overview of the program. In end result, should display a table of tasks to complete, along with other statistics to be decided (total tasks completed/completed in a week, completed task streak?, ect.)
     Make sure overdue tasks are in their own category at the top.
     
-    TO-DO:
-    - truncate. 8 tasks makes this unreadable (in vscode term tbf).
-       - truncate to like, 5 by default and after that show lists? could definetly be implemented alongside rich, potentially
-       - general game plan is see the length, if >5 then convert into a list and only show index 0:4, and display something like "Page 1 out of (n/5). Please input page # to jump to that page."
-       - this sucks and will probably cause some task anxiety though
-          - maybe just showing a daily list could be good but what if there aren't due dates (sorting by priority works but is a smidge lame)
-          - just showing the daily list (or X tasks) is a good alternative but should be a flag (user settings file or something, probably not... default?)
-             - maybe it's just me but I want to reduce the number of inputs. seeing tasks should be a (mostly) 1 input thing. KISS and all that.
-    - change table to only show completed tasks for the day. Maybe a running total of completed tasks can take the spot
-    - change order of names in the table (name, priority, due date, completed), could argue for due date first but i'm not sure
-       - just run a conditional statement to remove all rows with a date in the past
-    - implement rich: will need to change how the data is passed into this main veiw, as it runs on it's own form of tables.
-       - or something like that, printing the pandas table caused an infinite recursion which was funny but not useful
-       - maybe pass the columns in as lists?
-    - strikethrough text the finished tasks? might help a lot with readability, moreso than an emoji.
+
     '''
 
     continueFlag = True
     while continueFlag == True:
+        #this conditional will need to be updated at a later point in time.
         if len(pandaDF) == 0:
             print("There are no tasks at the moment. Why not add one? :)")
         else:
             displayTasks = pd.DataFrame(pandaDF.sort_values(["due_date", "priority"], ascending=[True, False]))
-            #change - remove completion date because we don't need it in this view.
             displayTasks.drop(columns = ["changed", "new", "completion_date"], inplace = True)
             displayTasks.set_index("id", inplace=True)
-            print(tabulate(displayTasks, ["#","Task Name", "Completed?", "Due Date", "Priority Level"], tablefmt = "rounded_grid", numalign="center"))
+            colReorder = ["name", "priority", "due_date", "complete"]
+            displayTasks = displayTasks[colReorder]
+            print(tabulate(displayTasks, ["id","Task Name", "Priority", "Due Date", "Completed?"], tablefmt = "rounded_grid", numalign="center"))
         #need to figure out how to actually get the main view to look cool
-        print("Please input the command you would like to perform, and press enter.")
+        print("Please type the command you would like to perform, and press enter.")
         print("(Type 'help' for a list of commands!)")
         #run input function
         continueFlag = usrInput()
+        #TO DO: update this function to refresh everything only once in awhile
     return
 
 pandaDF = initialize()
