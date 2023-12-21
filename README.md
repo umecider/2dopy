@@ -1,7 +1,7 @@
 # 2do.py
 
 ## Introduction
-This is a simple project I've been working on to create a simple to-do program that runs in the terminal, without a GUI. The main purpose of this was to get used to creating and managing an SQL Database, along with refreshing my pandas.DataFrame manipulation.
+This is a simple project I've been working on to create a simple to-do program that runs in the terminal, without a GUI. The main purpose of this was to get used to creating and managing an SQL Database, and to get refreshed with performing pandas.DataFrame operations.
 
 ## Usage
 First, make sure your pyton environment has the following libraries installed:
