@@ -8,7 +8,8 @@ First, make sure your pyton environment has the following libraries installed:
 - pandas
 - python-dateutil
 - sqlite3
-If you do not have any of these, you can install them easily using pip.
+- tabulate
+If you do not have any of these, you can install them easily using pip ("python -m pip install [name]")
 
 To use this program, open a terminal and navigate to the folder where the program is located. Then, simply run the program with your local python directory. The program will create a new local SQL database in the same location. Commands are input either by inputting the first letter of the command, or the whole command. The following commands are implemented: 
 
@@ -26,11 +27,12 @@ To use this program, open a terminal and navigate to the folder where the progra
 ## Future Development Goals and Ideas:
 - Implement python library rich in order to have a better terminal output.
 - Implement graphs and statistics for completed statistics.
-- Implement Auto-Saving.
+~~- Implement Auto-Saving.~~ Done! Set to 20 seconds at the moment.
+- Implement Settings Adjustment (database location, auto save duration.)
 - Implement Creating and Completing tasks from the command line
     - Syntax would be something like "python3 todo.py -c (id number)" for completing a task and "python3 todo.py -n "task name", MM/DD/YY HH:MM, (prioritylevel)" to make a new task.
         - It would try to perform these, and if errors occur then it'd leave the corresponding value blank (besides the task name)
-- Rename python file to "2do.py" instead of "todo.py"
+~~- Rename python file to "2do.py" instead of "todo.py"~~ Done!
 - Allow for filters to the main view (Filter out completed tasks, Filter out tasks that aren't completed, sort by priority, sort by date, ect.)
 - Be able to search all tasks by name to decide on which to complete and edit, rather than having to input the ID number.
     - The main issue I can forsee is dealing with duplicate tasks, as it'd need to return multiple tasks and then ask the user to pick one.
