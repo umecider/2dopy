@@ -9,6 +9,7 @@ import re
 #using tabulate is temporary, hopefully. I'll need to nearly completely rework the mainView function
 #and i don't want to do that at the moment. This beautifies the output, to a degree. the rest will be done through rich
 from tabulate import tabulate
+import time
 
 #https://stackoverflow.com/questions/37288421/how-to-plot-a-chart-in-the-terminal cool idea for future implementation; output a graph/date time chart through the terminal, though could also just generate and output them like normal.
 
@@ -69,6 +70,8 @@ def initialize():
 def usrInput(df) -> bool:
     '''
     Checks the user's input. Does not have any arguments, and could be merged with mainView. If the input matches with known strings (or some shortened versions) then it will call a function related to them (ie: create a task, update a task, ect.)
+
+    unsure why i have a bunch listed as incomplete.
     '''
     inputStr = input()
     #standardize input
@@ -93,6 +96,11 @@ def usrInput(df) -> bool:
     #incomplete
     if(inputStr == "q" or inputStr == "quit"):
         #print("Q")
+        autoSaveFlag = updateSQL(df)
+        if(autoSaveFlag == True):
+            print("Data Saved.\nHave a nice day! :)")
+        else:
+            print("Have a nice day! :)")
         return False
     #incomplete
     if(inputStr == "h" or inputStr == "help"):
@@ -104,16 +112,23 @@ def usrInput(df) -> bool:
             "Complete: Mark a task as complete.",
             "Save: Manually save the tasks to the database.",
             "Help: Display this message.",
-            "Quit: Exit the program. WILL NOT AUTOMATICALLY SAVE."
+            "Quit: Exit the program."
         ]
         #iterate through command list and print each string
         for x in commandList:
             print(x)
         return True
     if(inputStr == "s" or inputStr == "save"):
-        updateSQL(df)
+        changedFlag = updateSQL(df)
         df["new"] = 0
         df["changed"] = 0
+        if(changedFlag == True):
+            print("Data has been saved! Returning to menu.")
+        elif(changedFlag == False):
+            print("No changes or new data found! Returning to menu.")
+        else:
+            print("Something went wrong. Please try again.")
+        time.sleep(1)
         return True
     else:
        print("Input not recognized, please try again")
@@ -336,13 +351,12 @@ def createTask(df):
     print("Task Added. Returning to main view.")
     return df
 
-def updateSQL(df):
+def updateSQL(df) -> bool:
     #Updates SQL from the dataframe.
     changedRows = df[df["changed"] == 1]
     newRows = df[df["new"] == 1]
     if(len(changedRows)==0 and len(newRows)==0):
-        print("No Changes Found! Returning to menu.")
-        return
+        return False
     connection = sqlite3.connect("tasklist.db")
     curs = connection.cursor()
     #print(changedRows)
@@ -391,6 +405,5 @@ def updateSQL(df):
             curs.execute(updateString, values)
     connection.commit()
     connection.close()
-    print("Data Saved! Returning to menu.")
-    return
+    return True
 
