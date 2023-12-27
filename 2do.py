@@ -67,18 +67,21 @@ def populateDF() -> pd.DataFrame:
 ### ARGPARSE ###
 #https://docs.python.org/3/library/argparse.html
 """ arguments to implement
-        "New: Create a new task.",
+100% Done.        "New: Create a new task.",
             "Edit: Edit details of a task.",
-            "Complete: Mark a task as complete.",
+100% Done (USES ID)            "Complete: Mark a task as complete.",
 100% Done.            Show Table
 handled by python.           "Help: Display this message.",
 """
 parser = argparse.ArgumentParser(description="Simple to-do list, from the comfort of your terminal! \nIf you want to use the Terminal UI, please run the file again, without any flags. :)")
-parser.add_argument("--new","-n", nargs = 1, metavar="Title", help = "Create new task. Can be combined with --date and --priority.")
-parser.add_argument("--date","-d",nargs=1, help = "Add date to a task in the format MM/DD/YY. Used in conjunction with --new") #can probably also use this with edit
-parser.add_argument("--priority","-p",nargs=1, type=int, help="Add a priority level to a task, on a level from 1-5. Used in conjunction with --new")#can also probably be used with edit
-parser.add_argument("--show","-s", action="store_true", help = "Display the table of tasks to be completed. Will run after any other flags have been passed. Pass --all to show all tasks.")
-parser.add_argument("--all", "-a", action="store_true", help = "Show all tasks. Used in conjunction with --show")
+parser.add_argument("-n","--new", action = "store_true", help = "Create new task. Requires -t to be passed aswell. Can be combined with -d and -p.")
+parser.add_argument("-e", "--edit", nargs = 1, type=int, metavar = "ID", help = "Edit a task based on ID number. Use -t, -d and -p to edit the respective values.")
+parser.add_argument("-c","--complete", nargs = 1, type = int, metavar = "ID", help = "Mark the task with the ID passed as complete.")
+parser.add_argument("-s","--show", action="store_true", help = "Display the table of tasks to be completed. Will run after any other flags have been passed. Pass -a to show all tasks.")
+parser.add_argument("-t", "--task-name", nargs = "+", dest="name", action = "extend", help = "Adds a task name modifier. Used in conjunction with -e and -n.")
+parser.add_argument("-d","--date",nargs=1, help = "Add date to a task in the format MM/DD/YY. Used in conjunction with -n and -e") #can probably also use this with edit
+parser.add_argument("-p","--priority",nargs=1, metavar="level", type=int, help="Add a priority level to a task, on a level from 1-5. Used in conjunction with -n and -e")#can also probably be used with edit
+parser.add_argument("-a", "--all", action="store_true", help = "Show all tasks. Used in conjunction with -s")
 args = parser.parse_args()
 
 
@@ -98,5 +101,19 @@ if not len(sys.argv) > 1:
             lastUpdate = checkTime(AUTOSAVE_DELAY, lastUpdate, pandaDF)
 ### Dealing with commandline arguments
 else:
+    #Error Handling for dependencies
+    #all flag used without show
+    if(args.show == False and args.all == True):
+        parser.error("--all cannot be used without calling --show!")
+    #title/date/priority used without new/edit
+    if (args.new == False and args.priority != None and args.edit == None):
+        parser.error("-p must be used with -n or -e!")
+    if (args.new == False and args.date != None and args.edit == None):
+        parser.error("-d must be used with -n or -e!")
+    if (args.new == False and args.name != None and args.edit == None):
+        parser.error("-t must be used with -n or -e!")
+    #new task created but no title passed
+    if (args.new == True and args.name == None):
+        parser.error("-n requires a -t to create a task.")
     cmlDF = populateDF()
-    parseArgs(args, cmlDF)
+    parseArgs(args, cmlDF, parser)

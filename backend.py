@@ -180,7 +180,7 @@ def editTask(df):
                                 df.at[index, "priority"] = priorityNew
                                 df.at[index, "changed"] = 1
                         case "name":
-                            print("Please type the name of the task to edit and press enter.")
+                            print("Please type the new name of the task and press enter.")
                             df.at[index,"name"] = input()
                             df.at[index,"changed"] = 1
                         case "complete":
@@ -223,6 +223,7 @@ def getDate():
             today = datetime.datetime.today()
             #documentation for string formatting: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
             #If there's a better way of doing this I'd gladly just do that instead because this is sort of ugly.
+            #12/26/23 - to past me: why do we care about the hours when we don't accept that as input (adding this to the to-implement list)
             if(pd.Timestamp.min < taskDate < pd.Timestamp.max):
                 if (taskDate.strftime("%Y")==today.strftime("%Y")):
                     if(taskDate.strftime("%d")=="01" or taskDate.strftime("%d")=="21" or taskDate.strftime("%d")=="31"):
