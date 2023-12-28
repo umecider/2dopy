@@ -5,3 +5,16 @@
 - added rules for id flag dependencies (enforces that it must be used with cml edit/complete)
 - As of right now, before title search is implemented, the CML is completely done. adding title search will be a pain for CML inputs specifically so I'm planning to keep it in the way of using ID only, so it can be used for automation purposes or in the way of an API of sorts
 - found bug with calling multiple functions at once. Have applied a limit to ensure only one action is used at once.
+- implemented basic removal system
+    - main issue is that it doesn't explicitly remove it from the pandas table until exit - even after saving. This is pretty bad because it means that the ID number won't free up until the next time the application is used, and could cause issues due to the way that ID numbers are assigned (it's based on length)
+    - so basically if one were to have four tasks and delete any task but the fourth one, 2 tasks would be assigned the same ID.
+        -probably just going to have it assign the ID based on the last task to be added to the list, adding an edge case for when the database is empty.
+- revamped ID system in the way previously discussed
+    - thought it broke all ID based indexing systems but I was already doing it properly, it seems.
+- fixed complete function for command line (i forgot to adjust how it worked after changing the ID system :/)
+- fixed indexing for edit/delete in command line (was operating under the faulty old way of  ID-1)
+- added remove command for commandline
+- fixed broken ID reporting for new command for cml
+- added a check for inputting a negative ID number
+- made the main view remove deleted rows after the change had been made in the SQL
+    - Will need to update the view somehow to indicate files marked for deletion. with a TUI/rich I could show with strikethrough but I doubt tabulate has that feature.

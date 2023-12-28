@@ -68,6 +68,18 @@ def initialize():
     Should write a way to add a new column to the dataframe, called "changed" for editing values
     (that way we don't need to update all values, and just the ones that have been changed)
     ''' 
+
+    #implementing new column variable to cut down on how many rows the program will update
+    #0 = not changed 1 = changed
+    #only update changed values in database
+    df["changed"] = 0
+    #Implementing column variable to also flag when I need to use a different function to update the database.
+    #0 = not new, 1 = new
+    #if new need to add a row rather than update it.
+    df["new"] = 0
+    #Implementing column variable to mark rows for deletion upon an update. Will exclude these from the main view.'
+    df["deletion"] = 0
+
     return df
 
 def usrInput(df) -> bool:
@@ -113,6 +125,7 @@ def usrInput(df) -> bool:
             "New: Create a new task.",
             "Edit: Edit details of a task.",
             "Complete: Mark a task as complete.",
+            "Delete: Mark a task for deletion upon saving.",
             "Save: Manually save the tasks to the database.",
             "Help: Display this message.",
             "Quit: Exit the program."
@@ -125,6 +138,7 @@ def usrInput(df) -> bool:
         changedFlag = updateSQL(df)
         df["new"] = 0
         df["changed"] = 0
+        df.drop(df[df["deletion"] == 1].index, inplace = True)
         if(changedFlag == True):
             print("Data has been saved! Returning to menu.")
         elif(changedFlag == False):
@@ -132,6 +146,9 @@ def usrInput(df) -> bool:
         else:
             print("Something went wrong. Please try again.")
         time.sleep(1)
+        return True
+    if(inputStr == "d" or inputStr == "delete"):
+        df = removeRow(df)
         return True
     else:
        print("Input not recognized, please try again")
@@ -331,7 +348,7 @@ def completeTask(df):
 
 def createTask(df):
     '''
-    Function to create a new task in the SQL database. Takes in multiple arguments and then uses the insert keyword to create a new row in the SQL database. Additionally, should add a new row to the pandas library.
+    Function to create a new task in the SQL database. Takes in multiple arguments and then uses the insert keyword to `create` a new row in the SQL database. Additionally, should add a new row to the pandas library.
     '''
     #Get Task Name
     print("Please type the name of the task to create and press enter.")
@@ -354,15 +371,37 @@ def createTask(df):
     return df
 
 def addRow(df, name, date = None, priority = 0):
-    idNumber = len(df) + 1
-    index = len(df)
-    df.loc[index] = [idNumber, name, 0, date, priority, None, 0, 1]
+    index = len(df) - 1
+    if (index < 0):
+        idNumber = 1
+    else:
+        idNumber = df.at[index,"id"] + 1
+    df.loc[index+1] = [idNumber, name, 0, date, priority, None, 0, 1, 0] #id, name, complete, date, priority, completion_date, changed, new, deletion
     return
+
+def deleteRow(df, id):
+    index = df[df["id"] == int(id)].index.item()
+    #print(index)
+    #print(df)
+    df.at[index, "deletion"] = 1
+    return df
+
+def removeRow(df) -> pd.DataFrame:
+    while True:
+        print("Please input the ID number of the task you'd like to delete, or input quit to go back to the main menu.")
+        toRemove = input()
+        #quit to menu
+        if(toRemove.rstrip().lower() == "quit" or toRemove.rstrip().lower() == 'q'):
+            return
+        if(re.match(r"\d+", toRemove) != None):
+            return deleteRow(df, int(toRemove))
+
 def updateSQL(df) -> bool:
     #Updates SQL from the dataframe.
     changedRows = df[df["changed"] == 1]
     newRows = df[df["new"] == 1]
-    if(len(changedRows)==0 and len(newRows)==0):
+    toDelete = df[df["deletion"] == 1]
+    if(len(changedRows)==0 and len(newRows)==0 and len(toDelete) == 0):
         return False
     connection = sqlite3.connect("tasklist.db")
     curs = connection.cursor()
@@ -411,6 +450,16 @@ def updateSQL(df) -> bool:
                 id = ?;
             '''
             curs.execute(updateString, values)
+    if(len(toDelete) > 0):
+        for z in range(len(toDelete)):
+            #https://www.sqlitetutorial.net/sqlite-delete/
+            deletionID = int(toDelete.iloc[z]["id"])
+            deletionString = ''' DELETE from tasks
+            WHERE
+                id = ?;
+            '''
+            #fails when doing tuple, using list as per https://stackoverflow.com/questions/11853167/parameter-unsupported-when-inserting-int
+            curs.execute(deletionString,[deletionID])
     connection.commit()
     connection.close()
     return True

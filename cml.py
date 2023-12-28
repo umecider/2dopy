@@ -20,15 +20,15 @@ def parseArgs(args, df, parser):
             else:
                 print("Priority is out of range. Omitting.")
         addRow(df, " ".join(args.name), dateTime, priorityLevel)
-        print("Task added.\nName:", " ".join(args.name), "| Due Date:", dateTime, "| Priority:", priorityLevel, "| ID Number:", (len(df)))
+        print("Task added.\nName:", " ".join(args.name), "| Due Date:", dateTime, "| Priority:", priorityLevel, "| ID Number:", (df.at[(len(df)-1),"id"]))
 #complete task 
     if(args.complete == True and args.edit == False):
         #check for if ID is in range
-        if (args.complete[0] > len(df) or args.complete[0] < 0):
+        if (args.ID[0] > len(df) or args.ID[0] < 0):
             parser.error("That ID does not exist.")
-        elif(args.complete[0] != 0):
+        elif(args.id[0] != 0):
             #from main: 
-            index = args.complete[0]-1
+            index = df[df["id"] == int(args.ID[0])].index.item()
             df.at[index, "complete"] = 1
             df.at[index, "completion_date"] = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             df.at[index, "changed"] = 1
@@ -36,7 +36,7 @@ def parseArgs(args, df, parser):
 
 #editing
     if(args.edit == True):
-        index = args.ID[0]-1
+        index = df[df["id"] == int(args.ID[0])].index.item()
     #Name
         if(args.name != None):
             df.at[index, "name"] = " ".join(args.name)
@@ -71,9 +71,15 @@ def parseArgs(args, df, parser):
                 df.at[index, "completion_date"] = None
                 df.at[index, "changed"] = 1
                 print("Task marked as incomplete. The completion date has been set to none.")
-
+#Removal
+    if(args.remove == True):
+        index = df[df["id"] == int(args.ID[0])].index.item()
+        df.at[index,"deletion"] = 1
+        print("Task deleted. Task name:", df.at[index,"name"])
 #automatic saving because come ON
-    updateSQL(df)
+    justDoubleCheckin = updateSQL(df)
+    if justDoubleCheckin == True:
+        print("Changes Saved.")
 #args show and all. To run last.
     if(args.show == True):
         #this is stolen from mainView() but slightly modified to work with the args
