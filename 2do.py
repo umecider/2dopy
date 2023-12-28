@@ -68,16 +68,17 @@ def populateDF() -> pd.DataFrame:
 #https://docs.python.org/3/library/argparse.html
 """ arguments to implement
 100% Done.        "New: Create a new task.",
-            "Edit: Edit details of a task.",
+100% Done (USES ID)            "Edit: Edit details of a task.",
 100% Done (USES ID)            "Complete: Mark a task as complete.",
 100% Done.            Show Table
 handled by python.           "Help: Display this message.",
 """
 parser = argparse.ArgumentParser(description="Simple to-do list, from the comfort of your terminal! \nIf you want to use the Terminal UI, please run the file again, without any flags. :)")
-parser.add_argument("-n","--new", action = "store_true", help = "Create new task. Requires -t to be passed aswell. Can be combined with -d and -p.")
-parser.add_argument("-e", "--edit", nargs = 1, type=int, metavar = "ID", help = "Edit a task based on ID number. Use -t, -d and -p to edit the respective values.")
-parser.add_argument("-c","--complete", nargs = 1, type = int, metavar = "ID", help = "Mark the task with the ID passed as complete.")
+parser.add_argument("-n","--new", action = "store_true", help = "Create new task. REQUIRES THE -t ARGUMENT. Can be combined with -d and -p.")
+parser.add_argument("-e", "--edit", action = "store_true", help = "Edit a task based on ID number. REQUIERS the -i ARGUMENT. Use -t, -d and -p to edit the respective values. You can also pass -c without an ID modifier to change the completion status.")
+parser.add_argument("-c","--complete", action = "store_true", help = "Mark the task with the ID passed as complete. REQUIRES THE -i ARGUMENT UNLESS BEING USED WITH -e")
 parser.add_argument("-s","--show", action="store_true", help = "Display the table of tasks to be completed. Will run after any other flags have been passed. Pass -a to show all tasks.")
+parser.add_argument("-i", "--ID", nargs = 1, type = int, help = "Adds an ID modifier. Can only be used with -e and -c.")
 parser.add_argument("-t", "--task-name", nargs = "+", dest="name", action = "extend", help = "Adds a task name modifier. Used in conjunction with -e and -n.")
 parser.add_argument("-d","--date",nargs=1, help = "Add date to a task in the format MM/DD/YY. Used in conjunction with -n and -e") #can probably also use this with edit
 parser.add_argument("-p","--priority",nargs=1, metavar="level", type=int, help="Add a priority level to a task, on a level from 1-5. Used in conjunction with -n and -e")#can also probably be used with edit
@@ -114,6 +115,15 @@ else:
         parser.error("-t must be used with -n or -e!")
     #new task created but no title passed
     if (args.new == True and args.name == None):
-        parser.error("-n requires a -t to create a task.")
+        parser.error("-n requires a -t modifier to create a task!")
+    #default complete flag passed without edit
+    if (args.complete == True and args.edit == False and args.ID == None):
+        parser.error("-c must be passed with an ID number using the -i modifier!")
+    if (args.edit == True and args.ID == None):
+        parser.error("-e requires an ID number using the -i modifier!")
+    if(args.complete == False and args.edit == False and args.ID != None):
+        parser.error("-i can only be used with -e and -c!")
+    if(args.complete == True and args.edit == True or args.new == True):
+        parser.error("At the moment, multi argument support is not supported.")
     cmlDF = populateDF()
     parseArgs(args, cmlDF, parser)

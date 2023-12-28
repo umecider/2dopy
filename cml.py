@@ -22,11 +22,11 @@ def parseArgs(args, df, parser):
         addRow(df, " ".join(args.name), dateTime, priorityLevel)
         print("Task added.\nName:", " ".join(args.name), "| Due Date:", dateTime, "| Priority:", priorityLevel, "| ID Number:", (len(df)))
 #complete task 
-    if(args.complete is not None):
+    if(args.complete == True and args.edit == False):
         #check for if ID is in range
         if (args.complete[0] > len(df) or args.complete[0] < 0):
             parser.error("That ID does not exist.")
-        else:
+        elif(args.complete[0] != 0):
             #from main: 
             index = args.complete[0]-1
             df.at[index, "complete"] = 1
@@ -35,8 +35,8 @@ def parseArgs(args, df, parser):
             print("Task",args.complete[0],"marked as complete. Name:", df.at[index,"name"])
 
 #editing
-    if(args.edit != None):
-        index = args.edit[0]-1
+    if(args.edit == True):
+        index = args.ID[0]-1
     #Name
         if(args.name != None):
             df.at[index, "name"] = " ".join(args.name)
@@ -59,24 +59,18 @@ def parseArgs(args, df, parser):
                 print("Priority Level changed to:", args.priority[0])
             else:
                 print("Priority is out of range. Keeping saved value.")
-        #do i add a case here for modifying complete
-            ### refrence code from backend ###
-#                         case "complete":
-#                             while True:
-#                                 print("Please type 0 for not complete, and 1 for complete.")
-#                                 completionBinary = input()
-#                                 if(re.match(r"[0-1]", completionBinary) !=0):
-#                                     completionBinary = int(completionBinary)
-#                                     if(completionBinary == 1):
-#                                         df.at[index, "complete"] = 1
-#                                         df.at[index, "completion_date"] = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-#                                         df.at[index, "changed"] = 1
-#                                         break
-#                                     if(completionBinary == 0):
-#                                         df.at[index, "complete"] = 0
-#                                         df.at[index, "completion_date"] = None
-#                                         df.at[index, "changed"] = 1
-#                                         break
+        if(args.complete == True):
+            compareValue = df.at[index,"complete"]
+            if (compareValue == 0):
+                df.at[index,"complete"] = 1
+                df.at[index, "completion_date"] = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+                df.at[index, "changed"] = 1
+                print("Task marked as complete. Completion Time set to now.")
+            else:
+                df.at[index,"complete"] = 0
+                df.at[index, "completion_date"] = None
+                df.at[index, "changed"] = 1
+                print("Task marked as incomplete. The completion date has been set to none.")
 
 #automatic saving because come ON
     updateSQL(df)
