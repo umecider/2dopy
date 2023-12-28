@@ -10,6 +10,9 @@ import re
 #and i don't want to do that at the moment. This beautifies the output, to a degree. the rest will be done through rich
 from tabulate import tabulate
 import time
+import warnings
+#pandas keeps saying i'm concating empty frames but.... i'm literally just using df.loc
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 #https://stackoverflow.com/questions/37288421/how-to-plot-a-chart-in-the-terminal cool idea for future implementation; output a graph/date time chart through the terminal, though could also just generate and output them like normal.
 
@@ -177,7 +180,7 @@ def editTask(df):
                                 df.at[index, "priority"] = priorityNew
                                 df.at[index, "changed"] = 1
                         case "name":
-                            print("Please type the name of the task to edit and press enter.")
+                            print("Please type the new name of the task and press enter.")
                             df.at[index,"name"] = input()
                             df.at[index,"changed"] = 1
                         case "complete":
@@ -220,6 +223,7 @@ def getDate():
             today = datetime.datetime.today()
             #documentation for string formatting: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
             #If there's a better way of doing this I'd gladly just do that instead because this is sort of ugly.
+            #12/26/23 - to past me: why do we care about the hours when we don't accept that as input (adding this to the to-implement list)
             if(pd.Timestamp.min < taskDate < pd.Timestamp.max):
                 if (taskDate.strftime("%Y")==today.strftime("%Y")):
                     if(taskDate.strftime("%d")=="01" or taskDate.strftime("%d")=="21" or taskDate.strftime("%d")=="31"):
@@ -260,7 +264,7 @@ def prioritySet():
         print("Please type the priority of the task from 1-5. and press enter.")
         print("If you do not want to set a priority level, simply press enter.")
         print("If you'd like to go back to the previous menu, please type 'quit'.")
-        priorityLevel = input()
+        priorityLevel = input().strip()
         if(priorityLevel == ''):
             print("No priority level set.")
             priorityLevel = 0
@@ -345,12 +349,15 @@ def createTask(df):
         return
     #Now, collect all data and put it into corresponding things.
     print("Task Name: ", taskName, ", Due Date:", taskDate,", Priority Level: ", priorityLevel)
-    idNumber = len(df) + 1
-    index = len(df)
-    df.loc[index] = [idNumber, taskName, 0, taskDate, priorityLevel, None, 0, 1]
+    addRow(df, taskName, taskDate, priorityLevel)
     print("Task Added. Returning to main view.")
     return df
 
+def addRow(df, name, date = None, priority = 0):
+    idNumber = len(df) + 1
+    index = len(df)
+    df.loc[index] = [idNumber, name, 0, date, priority, None, 0, 1]
+    return
 def updateSQL(df) -> bool:
     #Updates SQL from the dataframe.
     changedRows = df[df["changed"] == 1]
@@ -374,7 +381,8 @@ def updateSQL(df) -> bool:
             else:
                 strNewCompletion = None
             newValues = (int(newRows.iloc[y]["id"]), str(newRows.iloc[y]["name"]), int(newRows.iloc[y]["complete"]), strNewDate, int(newRows.iloc[y]["priority"]), strNewCompletion)
-            insertString = ''' INSERT INTO tasks('id', 'name', 'complete', 'due_date', 'priority', 'completion_date')
+            #added or ignore because sometimes it randomly fails (probably because there's nothing to update)
+            insertString = ''' INSERT OR IGNORE INTO tasks('id', 'name', 'complete', 'due_date', 'priority', 'completion_date')
             VALUES(?,?,?,?,?,?)
             '''
             curs.execute(insertString, newValues)
