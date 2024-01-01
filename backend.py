@@ -125,7 +125,7 @@ def usrInput(df) -> bool:
             "New: Create a new task.",
             "Edit: Edit details of a task.",
             "Complete: Mark a task as complete.",
-            "Delete: Mark a task for deletion upon saving.",
+            "Remove: Mark a task for deletion upon saving.",
             "Save: Manually save the tasks to the database.",
             "Help: Display this message.",
             "Quit: Exit the program."
@@ -147,7 +147,7 @@ def usrInput(df) -> bool:
             print("Something went wrong. Please try again.")
         time.sleep(1)
         return True
-    if(inputStr == "d" or inputStr == "delete"):
+    if(inputStr == "r" or inputStr == "remove"):
         df = removeRow(df)
         return True
     else:

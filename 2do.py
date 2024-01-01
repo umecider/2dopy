@@ -118,7 +118,9 @@ else:
     if(args.complete == False and args.edit == False and args.ID != None and args.remove == False):
         parser.error("-i can only be used with -e, -c, and -r!")
     #only one flag at a time - I need to come up with a better system.
-    if((args.complete == True and args.edit == True) or (args.new == True and args.complete == True) or (args.edit == True and args.new == True) or (args.new == True and args.remove == True) or (args.complete == True and args.remove == True) or (args.edit == True and args.remove == True)):
+    #if((args.complete == True and args.edit == True) or (args.new == True and args.complete == True) or (args.edit == True and args.new == True) or (args.new == True and args.remove == True) or (args.complete == True and args.remove == True) or (args.edit == True and args.remove == True)):
+    #shoutout to ser for this one
+    if(sum([args.complete,args.new,args.edit,args.remove])>0):
         parser.error("At the moment, multi argument support is not supported.")
     if(args.ID != None and args.ID <0):
         parser.error("The ID number has been input incorrectly. Please try again.")
