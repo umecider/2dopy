@@ -6,9 +6,6 @@ import sqlite3
 import dateutil
 import datetime
 import re
-#using tabulate is temporary, hopefully. I'll need to nearly completely rework the mainView function
-#and i don't want to do that at the moment. This beautifies the output, to a degree. the rest will be done through rich
-from tabulate import tabulate
 import time
 import warnings
 #pandas keeps saying i'm concating empty frames but.... i'm literally just using df.loc
