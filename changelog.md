@@ -18,3 +18,8 @@
 - added a check for inputting a negative ID number
 - made the main view remove deleted rows after the change had been made in the SQL
     - Will need to update the view somehow to indicate files marked for deletion. with a TUI/rich I could show with strikethrough but I doubt tabulate has that feature.
+
+2/28/24:
+refactoring code. SQL and Dataframe files/functions have been made/converted. Need to overhaul how the CML arguments work.
+Need to finalize how to work with datetimes - at the moment, considering storing and working with them in string format in the dataframe, and converting if/when it is needed.
+The alternative is only working in timestamps - this would be easier as the conversion just needs to happen upon startup and when pulling from SQL. However, if they aren't used, a bit of performance is lost. Regardless right now I'm working with both which is less than ideal.
