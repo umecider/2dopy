@@ -129,6 +129,29 @@ def delete(tasks:list)-> None:
     connection.close()
     return
 
+def select(ids:list): #returns task list from ids, list has ints. Task list is list of dicts.
+    connection = sqlite3.connect(DATABASE)
+    curs = connection.cursor()
+    rows = []
+    selectString = """ SELECT * 
+    FROM tasks
+    WHERE id = ?
+    """
+    for x in ids:
+        #https://pynative.com/python-sqlite-select-from-table/
+        curs.execute(selectString, [x]) #gets all tasks with id = x
+        tempRow = curs.fetchone() #gets the first task from the list
+        #print(tempRow)
+        #Return format:
+        #tuple -> (id, name, completed, due date, priority, completion date)
+        if tempRow == None: #check if the fetch exists
+            pass
+        else:
+            rows.append({"id":tempRow[0], "name": tempRow[1], "complete": tempRow[2], "due_date": tempRow[3], "priority": tempRow[4], "completion_date": tempRow[5]})
+    connection.close()
+    return rows
+
+
 def createDF() ->pd.DataFrame:
     connection = sqlite3.connect(DATABASE)
     #can i just select * from tasks
@@ -153,3 +176,21 @@ def createDF() ->pd.DataFrame:
     df["deletion"] = 0
 
     return df
+
+def newID() -> int:
+    """
+    Used for generating new task IDs. Gets the largest ID in the dataframe and then adds 1 to it.
+    Can also be used for getting current largest ID.
+    """
+    connection = sqlite3.connect(DATABASE)
+    curs = connection.cursor()
+    #grab max id value - https://www.w3schools.com/sql/sql_min_max.asp
+    toExecute = """ SELECT MAX(id)
+    FROM tasks
+    """
+    curs.execute(toExecute)
+    temp = int(curs.fetchone()[0]) #get tuple, get first element of tuple, convert to int
+    #while i would like to just return using curs.fetchone we gotta close that connection
+    #also fetchone returns a tuple. no matter what. weird
+    connection.close()
+    return temp + 1 #I forgot to increment orz

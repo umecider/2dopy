@@ -1,5 +1,6 @@
 from backend.sql import createDF
 from backend.dataframe import usrInput, updateSQL
+from backend.cml import parseArgs
 import pandas as pd
 import time
 from tabulate import tabulate
@@ -52,17 +53,9 @@ def checkTime(delay, lastRun, df) -> float:
     else:
         return lastRun
     
-pandaDF = createDF()
-continueFlag = True
-lastUpdate = time.time()
-while(continueFlag == True):
-    continueFlag = mainView(pandaDF)
-    #print("checking time")
-    if(continueFlag!=False):
-        lastUpdate = checkTime(AUTOSAVE_DELAY, lastUpdate, pandaDF)
 
-""" 
-to revamp later
+
+""" to revamp later
 ### ARGPARSE ###
 #https://docs.python.org/3/library/argparse.html
 arguments to implement
@@ -70,7 +63,7 @@ arguments to implement
 100% Done (USES ID)            "Edit: Edit details of a task.",
 100% Done (USES ID)            "Complete: Mark a task as complete.",
 100% Done.            Show Table
-handled by python.           "Help: Display this message.",
+handled by python.           "Help: Display this message.", """
 
 parser = argparse.ArgumentParser(description="Simple to-do list, from the comfort of your terminal! \nIf you want to use the Terminal UI, please run the file again, without any flags. :)")
 parser.add_argument("-n","--new", action = "store_true", help = "Create new task. REQUIRES THE -t ARGUMENT. Can be combined with -d and -p.")
@@ -92,7 +85,7 @@ args = parser.parse_args()
 
 ### Main loop - runs when no args ###
 if not len(sys.argv) > 1:
-    pandaDF = initialize()
+    pandaDF = createDF()
     continueFlag = True
     lastUpdate = time.time()
     while(continueFlag == True):
@@ -131,9 +124,11 @@ else:
     #only one flag at a time - I need to come up with a better system.
     #if((args.complete == True and args.edit == True) or (args.new == True and args.complete == True) or (args.edit == True and args.new == True) or (args.new == True and args.remove == True) or (args.complete == True and args.remove == True) or (args.edit == True and args.remove == True)):
     #shoutout to ser for this one
-    if(sum([args.complete,args.new,args.edit,args.remove])>0):
-        parser.error("At the moment, multi argument support is not supported.")
-    if(args.ID != None and args.ID <0):
+    if(sum([args.complete,args.new,args.edit,args.remove])>1):
+        if(sum([args.complete,args.edit]) == 2):
+            pass
+        else:
+            parser.error("At the moment, multi argument support is not supported.")
+    if(args.ID != None and args.ID[0] < 0):
         parser.error("The ID number has been input incorrectly. Please try again.")
-    cmlDF = initialize()
-    parseArgs(args, cmlDF, parser) """
+    parseArgs(args, parser)
