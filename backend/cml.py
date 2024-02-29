@@ -4,6 +4,12 @@ from tabulate import tabulate
 import dateutil
 import datetime
 
+def checkID(args, parser) -> None:
+    for x in args.ID:
+        if (x > (sql.newID()-1) or x <= 0): #note: newID()-1 = current largest ID.
+            parser.error("The provided ID does not exist.")
+    return
+
 def addTask(name:str, date:datetime, priority:int) -> int:
     """
     Add task to SQL. Doesn't really need to be it's own function but it's easier to read.
@@ -14,6 +20,7 @@ def addTask(name:str, date:datetime, priority:int) -> int:
     return id
 
 def parseArgs(args, parser):
+    sql.initialize_table()
 #new task
     if(args.new == True):
         dateTime = None
@@ -33,16 +40,16 @@ def parseArgs(args, parser):
 #complete task 
     if(args.complete == True and args.edit == False):
         #check for if ID is in range
-        if (args.ID[0] > (sql.newID()-1) or args.ID[0] < 0): #note: newID()-1 = current largest ID.
-            parser.error("The provided ID does not exist.")
-        elif(args.ID[0] != 0):
-            toComplete = sql.select(args.ID)[0]
-            if toComplete == []:
+            checkID(args, parser)
+            toComplete = sql.select(args.ID)
+            if len(toComplete) < len(args.ID):
                 parser.error("The provided ID does not exist.")
             else:
-                toComplete["complete"] = 1
-                sql.update([toComplete])
-            print("Task",args.ID[0],"marked as complete. Name:", toComplete["name"])
+                for task in toComplete:
+                    task["complete"] = 1
+                    print("Task",task["id"],"marked as complete. Name:", task["name"])
+                sql.update(toComplete)
+                
 
 #editing
     if(args.edit == True):
@@ -81,11 +88,15 @@ def parseArgs(args, parser):
         print("Changes commited to SQL Database.")
 #Removal
     if(args.remove == True):
-        task = sql.select(args.ID)
-        if task == []:
-            parser.error("The provided ID does not exist.")
-        sql.delete(task)
-        print("Task deleted. Task name:", task[0]["name"])
+        checkID(args, parser)
+        tasks = sql.select(args.ID)
+        if len(tasks) != len(args.ID):
+            print("One or more of the IDs provided is invalid.")
+        else:
+            sql.delete(tasks)
+        print("Tasks Deleted:")
+        for task in tasks:
+            print("ID:", task["id"], "|Name:", task["name"])
 #args show and all. To run last.
     if(args.show == True):
         #this is stolen from mainView() but slightly modified to work with the args

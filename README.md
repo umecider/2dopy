@@ -32,6 +32,7 @@ If you'd like to perform these actions in the command line, the python file now 
 - Complete a task: python3 2do.py -c -i 15 -s -a(Marks the task at ID 15 as completed. Sets the completed date to the time the command was sent. After, shows all tasks.)
 - Remove task: python3 2do.py -r -id 15 (Removes the task at ID 15)
 - Show current to-do list: 2do.py -s (Shows a list of tasks that have not been completed. Add the -a modifier to show all tasks.)
+- *NEW!* You can batch complete and batch remove tasks! Just pass multiple numbers to the ID modifier (eg: -c -i 15 16 18 or -r -i 1 2 3)
 
 ## Future Development Goals and Ideas:
 - Implement python library textualize in order to greate a Terminal GUI.

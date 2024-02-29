@@ -189,7 +189,10 @@ def newID() -> int:
     FROM tasks
     """
     curs.execute(toExecute)
-    temp = int(curs.fetchone()[0]) #get tuple, get first element of tuple, convert to int
+    temprow = curs.fetchone()[0]
+    if temprow == None:
+        temprow = 0
+    temp = int(temprow) #get tuple, get first element of tuple, convert to int
     #while i would like to just return using curs.fetchone we gotta close that connection
     #also fetchone returns a tuple. no matter what. weird
     connection.close()
