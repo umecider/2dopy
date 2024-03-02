@@ -1,10 +1,11 @@
 import pandas as pd
 import sqlite3
+from pathlib import Path
 import datetime
 
 
 ###Constants###
-DATABASE = "tasklist.db"
+DATABASE = "./2dopy/data/tasklist.db" #changed to specific folder to ensure that it is able to be run no matter where the python command is called from
 
 ### TO DO:
 ###     - create a system to minimize number of connections made.
@@ -17,6 +18,7 @@ def initialize_table() -> None:
     To run when program starts. Creates DB and attempts to connect to it, and also makes any tables if they do not exist.
     For development: It might be wise to also create a connection function so I don't need to write conection = sqlite3.connect(DATABASE) constantly for updates to it. Additionally, need to make ure variables like the pandas DB are GLOBAL SCOPE or else this will suck lol (could also pass them along constantly but I'm not sure if there's any benefit to that.)
     '''
+    Path("./2dopy/data").mkdir(parents=True, exist_ok=True) #from https://stackoverflow.com/questions/273192/how-do-i-create-a-directory-and-any-missing-parent-directories
     #create DB using connection function: https://www.sqlitetutorial.net/sqlite-python/creating-database/
     connection = sqlite3.connect(DATABASE)
     #creating tables if they do not already exist: https://www.sqlitetutorial.net/sqlite-python/creating-tables/
