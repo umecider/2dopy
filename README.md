@@ -37,12 +37,11 @@ If you'd like to perform these actions in the command line, the python file now 
 ## Future Development Goals and Ideas:
 - Implement python library textualize in order to greate a Terminal GUI.
 - Implement graphs and statistics for completed statistics.
-~~- Implement Auto-Saving.~~ Done! Set to 20 seconds at the moment.
 - Implement Settings Adjustment (database location, auto save duration.)
-~~- Implement Creating and Completing tasks from the command line~~ Done! Will need to do a write up, but in general -h will give the information needed to start!
-   ~~ - Syntax would be something like "python3 todo.py -c (id number)" for completing a task and "python3 todo.py -n "task name", MM/DD/YY HH:MM, (prioritylevel)" to make a new task.~~
-       ~~ - It would try to perform these, and if errors occur then it'd leave the corresponding value blank (besides the task name)~~ 
-~~- Rename python file to "2do.py" instead of "todo.py"~~ Done!
 - Allow for filters to the main view (Filter out completed tasks, Filter out tasks that aren't completed, sort by priority, sort by date, ect.)
 - Be able to search all tasks by name to decide on which to complete and edit, rather than having to input the ID number.
     - The main issue I can forsee is dealing with duplicate tasks, as it'd need to return multiple tasks and then ask the user to pick one.
+- ~~Implement Auto-Saving.~~ Done! Set to 20 seconds at the moment.
+- ~~Implement Creating and Completing tasks from the command line~~ Done! Will need to do a write up, but in general -h will give the information needed to start!
+- ~~Rename python file to "2do.py" instead of "todo.py"~~ Done!
+
