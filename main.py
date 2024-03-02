@@ -1,4 +1,5 @@
-from backend.sql import createDF
+
+from backend.sql import createDF, initialize_table
 from backend.dataframe import usrInput, updateSQL
 from backend.cml import parseArgs
 import pandas as pd
@@ -83,6 +84,7 @@ args = parser.parse_args()
 
 ### Main loop - runs when no args ###
 if not len(sys.argv) > 1:
+    initialize_table()
     pandaDF = createDF()
     continueFlag = True
     lastUpdate = time.time()
