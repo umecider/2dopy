@@ -270,7 +270,6 @@ def usrInput(df) -> bool:
     '''
     Checks the user's input. Does not have any arguments, and could be merged with mainView. If the input matches with known strings (or some shortened versions) then it will call a function related to them (ie: create a task, update a task, ect.)
 
-    unsure why i have a bunch listed as incomplete.
     '''
     inputStr = input()
     #standardize input
