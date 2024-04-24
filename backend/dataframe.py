@@ -218,9 +218,11 @@ def createTask(df):
     #Get date: Loop until valid date or empty line
     taskDate = getDate()
     if taskDate == "quit":
+        print("Exiting to menu...")
         return
     priorityLevel = prioritySet()
     if(priorityLevel == 'quit'):
+        print("Exiting to menu...")
         return
     #Now, collect all data and put it into corresponding things.
     print("Task Name: ", taskName, ", Due Date:", taskDate,", Priority Level: ", priorityLevel)
@@ -246,7 +248,7 @@ def deleteRow(df, id):
 
 def removeRow(df) -> pd.DataFrame:
     while True:
-        print("Please input the ID number of the task you'd like to delete, or input quit to go back to the main menu.")
+        print("Please input the ID number of the task you'd like to delete, or input quit to go back to the main menu.\n !!! WARNING: THIS CANNOT BE UNDONE. !!!")
         toRemove = input()
         #quit to menu
         if(toRemove.rstrip().lower() == "quit" or toRemove.rstrip().lower() == 'q'):
