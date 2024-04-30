@@ -85,7 +85,7 @@ def editTask(df):
     return df
     
 def getDate():
-    #making this it's own function because I'm using it multiple times.
+    """Parses user input to obtain a date to be used in editTask/createTask"""
     while True:
         try:
             print("Please type the date the task is due in MM/DD/YY format, and the time it's due and press enter.")
@@ -135,6 +135,7 @@ def getDate():
     return taskDate
 
 def prioritySet():
+    '''Gets the user's input to assign a priority in editTask/createTask'''
     while True:
         print("Please type the priority of the task from 1-5. and press enter.")
         print("If you do not want to set a priority level, simply press enter.")
@@ -231,6 +232,7 @@ def createTask(df):
     return df
 
 def addRow(df, name, date = None, priority = 0):
+    '''Adds a row into the dataframe'''
     index = len(df) - 1
     if (index < 0):
         idNumber = 1
@@ -240,6 +242,7 @@ def addRow(df, name, date = None, priority = 0):
     return
 
 def deleteRow(df, id):
+    '''Mark row to be removed from the database'''
     index = df[df["id"] == int(id)].index.item()
     #print(index)
     #print(df)
@@ -247,6 +250,7 @@ def deleteRow(df, id):
     return df
 
 def removeRow(df) -> pd.DataFrame:
+    '''GUI/TUI version of accessing deleteRow'''
     while True:
         print("Please input the ID number of the task you'd like to delete, or input quit to go back to the main menu.\n !!! WARNING: THIS CANNOT BE UNDONE. !!!")
         toRemove = input()
@@ -257,7 +261,7 @@ def removeRow(df) -> pd.DataFrame:
             return deleteRow(df, int(toRemove))
 
 def updateSQL(df) -> bool:
-    #Updates SQL from the dataframe.
+    '''Updates SQL from the dataframe.'''
     changedRows = pd.DataFrame(df[df["changed"] == 1]).to_dict("records")
     newRows = pd.DataFrame(df[df["new"] == 1]).to_dict("records")
     toDelete = pd.DataFrame(df[df["deletion"] == 1]).to_dict("records")
@@ -337,3 +341,32 @@ def usrInput(df) -> bool:
        print("Input not recognized, please try again")
        usrInput(df)
     return
+
+def search(showCompleted:bool = False) -> int:
+    """Function to do wildcard searches for specific things/phrases in the database. 
+    Also handles what happens if there are multiple results that match, and have an abort method.
+    showCompleted = True should filter out all completed results from the resulting search.
+    Returns an ID."""
+    while True:
+        print("Please input the name of the task you want to select and press enter to search. To go back, please input \\quit.")
+        inputstr = input()
+        if inputstr == "\\quit":
+            print("Exiting.")
+            return "quit" #not an int but many of the programs implementing this accept a string to abort.
+        results = sql.search(inputstr)
+        if len(results) == 0:
+            print("No results found. Please try again.")
+        elif len(results) == 1:
+            task = results[0]
+            break
+        else:
+            print("Multiple results found. Please type the ID of the task you want to select.")
+            idList = []
+            for x in results:
+                print(x["id"]+":", x["name"])
+                idList.append(x["id"])
+            selectedID = input()
+            if selectedID in idList:
+                task = results["id" == selectedID]
+    print("Task Selected:\nID:",task["id"]+"|Name:", task["name"])
+    return task["id"]
