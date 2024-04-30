@@ -209,3 +209,26 @@ def newID() -> int:
     #also fetchone returns a tuple. no matter what. weird
     connection.close()
     return temp + 1 #I forgot to increment orz
+
+def searchTable(query:str):
+    searchString = """
+    SELECT * FROM tasks WHERE name LIKE ? 
+"""
+    results = []
+    connection = sqlite3.connect(DATABASE)
+    curs = connection.cursor()
+    querystr = "%"+query+"%"
+    print(querystr)
+    curs.execute(searchString, [querystr])
+    temp = curs.fetchall() #gets the first task from the list
+    #print(tempRow)
+    #Return format:
+    #tuple -> (id, name, completed, due date, priority, completion date)
+    for row in temp:
+        if row == None: #check if the fetch exists
+            pass
+        else:
+            results.append({"id":row[0], "name": row[1]})
+    connection.close()
+    print(results)
+    return
