@@ -34,11 +34,11 @@ def mainView(df):
             if len(displayTasks) == 0:
                 print("You've completed all of your tasks. Well done! :D\nIf you're up to it, why not add a new one?\n") #this should be the fix the conditional in line 22 wanted
             else:
-                print(tabulate(displayTasks, ["id","Task Name", "Priority", "Due Date"], tablefmt = "rounded_grid", numalign="center"))
+                print(tabulate(displayTasks, ["id","Task Name", "Priority", "Due Date"], tablefmt = "rounded_grid", numalign="center", stralign="center"))
         elif(SHOW_COMPLETED == True):
             displayTasks.loc[displayTasks["complete"] == 1, "complete"] = "\u2713"
             displayTasks.loc[displayTasks["complete"] == 0, "complete"] = "X"
-            print(tabulate(displayTasks, ["id","Task Name", "Priority", "Due Date", "Completed?"], tablefmt = "rounded_grid", numalign="center"))
+            print(tabulate(displayTasks, ["id","Task Name", "Priority", "Due Date", "Completed?"], tablefmt = "rounded_grid", numalign="center", stralign="center"))
     #need to figure out how to actually get the main view to look cool
     print("Please type the command you would like to perform, and press enter.")
     print("(Type 'help' for a list of commands!)")
