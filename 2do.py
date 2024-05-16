@@ -18,9 +18,9 @@ def mainView(df):
     
 
     '''
-    #this conditional will need to be updated at a later point in time.
+    #this conditional will need to be updated at a later point in time. (clarification: because we might be removing completed tasks.)
     if len(df) == 0:
-        print("There are no tasks at the moment. Why not add one? :)")
+        print("There are no tasks to display at the moment. Why not add one? :)\n")
     else:
         displayTasks = pd.DataFrame(df.sort_values(["due_date", "priority"], ascending=[True, False]))
         displayTasks.drop(columns = ["changed", "new", "completion_date"], inplace = True)
@@ -31,10 +31,14 @@ def mainView(df):
             #drop rows based on condition: https://stackoverflow.com/questions/13851535/how-to-delete-rows-from-a-pandas-dataframe-based-on-a-conditional-expression
             displayTasks.drop(displayTasks[displayTasks["complete"] == 1].index, inplace=True)
             displayTasks.drop(columns = ["complete"], inplace = True)
-
-            print(tabulate(displayTasks, ["id","Task Name", "Priority", "Due Date"], tablefmt = "rounded_grid", numalign="center"))
+            if len(displayTasks) == 0:
+                print("You've completed all of your tasks. Well done! :D\nIf you're up to it, why not add a new one?\n") #this should be the fix the conditional in line 22 wanted
+            else:
+                print(tabulate(displayTasks, ["id","Task Name", "Priority", "Due Date"], tablefmt = "rounded_grid", numalign="center", stralign="center"))
         elif(SHOW_COMPLETED == True):
-            print(tabulate(displayTasks, ["id","Task Name", "Priority", "Due Date", "Completed?"], tablefmt = "rounded_grid", numalign="center"))
+            displayTasks.loc[displayTasks["complete"] == 1, "complete"] = "\u2713"
+            displayTasks.loc[displayTasks["complete"] == 0, "complete"] = "X"
+            print(tabulate(displayTasks, ["id","Task Name", "Priority", "Due Date", "Completed?"], tablefmt = "rounded_grid", numalign="center", stralign="center"))
     #need to figure out how to actually get the main view to look cool
     print("Please type the command you would like to perform, and press enter.")
     print("(Type 'help' for a list of commands!)")
