@@ -210,7 +210,7 @@ def newID() -> int:
     connection.close()
     return temp + 1 #I forgot to increment orz
 
-def searchTable(query:str):
+def searchTable(query:str) -> list:
     searchString = """
     SELECT * FROM tasks WHERE name LIKE ? 
 """
@@ -218,7 +218,7 @@ def searchTable(query:str):
     connection = sqlite3.connect(DATABASE)
     curs = connection.cursor()
     querystr = "%"+query+"%"
-    print(querystr)
+    #print(querystr)
     curs.execute(searchString, [querystr])
     temp = curs.fetchall() #gets the first task from the list
     #print(tempRow)
@@ -230,5 +230,5 @@ def searchTable(query:str):
         else:
             results.append({"id":row[0], "name": row[1]})
     connection.close()
-    print(results)
-    return
+    #print(results)
+    return results

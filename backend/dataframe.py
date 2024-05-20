@@ -337,6 +337,9 @@ def usrInput(df) -> bool:
     if(inputStr == "r" or inputStr == "remove"):
         df = removeRow(df)
         return True
+    if(inputStr == "search"):
+        search()
+        return True
     else:
        print("Input not recognized, please try again")
        usrInput(df)
@@ -353,20 +356,33 @@ def search(showCompleted:bool = False) -> int:
         if inputstr == "\\quit":
             print("Exiting.")
             return "quit" #not an int but many of the programs implementing this accept a string to abort.
-        results = sql.search(inputstr)
+        results = sql.searchTable(inputstr)
         if len(results) == 0:
             print("No results found. Please try again.")
         elif len(results) == 1:
             task = results[0]
             break
         else:
-            print("Multiple results found. Please type the ID of the task you want to select.")
-            idList = []
-            for x in results:
-                print(x["id"]+":", x["name"])
-                idList.append(x["id"])
-            selectedID = input()
-            if selectedID in idList:
-                task = results["id" == selectedID]
-    print("Task Selected:\nID:",task["id"]+"|Name:", task["name"])
+            while True:
+                print("Multiple results found. Please type the ID of the task you want to select. Type \"quit\" to go back to the main search.")
+                idList = []
+                for x in results:
+                    print(str(x["id"])+":", x["name"])
+                    idList.append(x["id"])
+                selectedID = input()
+                if selectedID == "quit":
+                    break
+                if int(selectedID) in idList:
+                    task = results[idList.index(int(selectedID))]
+                    #explaination as to why this^ works: we append the values of the IDs in the index in the same order as the results list 
+                    #so we can just use the index to find the dictionary with the same ID value 
+                    break
+                else:
+                    print("TaskID not found.")
+            if selectedID != "quit": #checking that we're not just going back up one level, but instead leaving the function all together
+                break
+    #note: in the future this "reporting" section should be handled by the function calling it.
+    print("Task Selected:\nID:",str(task["id"])+"|Name:", task["name"])
+    #adding pause so people can read the result
+    time.sleep(1)
     return task["id"]
