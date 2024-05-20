@@ -228,7 +228,7 @@ def searchTable(query:str) -> list:
         if row == None: #check if the fetch exists
             pass
         else:
-            results.append({"id":row[0], "name": row[1]})
+            results.append({"id":row[0], "name": row[1], "completed": row[2]})
     connection.close()
     #print(results)
     return results

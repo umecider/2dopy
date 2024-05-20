@@ -337,6 +337,9 @@ def usrInput(df) -> bool:
     if(inputStr == "r" or inputStr == "remove"):
         df = removeRow(df)
         return True
+    if(inputStr == "search-all"):
+        search(True)
+        return True
     if(inputStr == "search"):
         search()
         return True
@@ -357,6 +360,8 @@ def search(showCompleted:bool = False) -> int:
             print("Exiting.")
             return "quit" #not an int but many of the programs implementing this accept a string to abort.
         results = sql.searchTable(inputstr)
+        if(showCompleted == False):
+            results = [results["completed" == 0]] #I have no idea why this one has to be turned into a list.... code works when you don't need to do this
         if len(results) == 0:
             print("No results found. Please try again.")
         elif len(results) == 1:
