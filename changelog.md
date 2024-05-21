@@ -30,3 +30,11 @@ on that note - should really figure out a way to get both ID and search going. T
 Just thinking of what I've seen people name their stuff - plus I'd prefer the user doesn't have to spend the extra time to wrap the numbers given they're a power user (especially if they're keeping the ID number around) - personally in favor of *id for searching thoug
 
 Maybe it would be good to add a filter for the ID column in the main view too... for a super minimalist task table....
+
+5/21/24
+Decided on ! to be the thing used for determining if ID is there or not - Need to filter out results since just doing ! results in a search which returns all tasks lol (not good)
+also need to handle bad input after it (type ! in search for complete and then quit and then qui and it errors)
+
+implemented search into complete and edit tasks
+
+need to update edit task to only show editable fields instead of all fields (and maybe throw that into a tabulate table)
