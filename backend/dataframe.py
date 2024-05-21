@@ -27,62 +27,59 @@ def editTask(df):
     3 Update values for task, exit loop and function
     '''
     while True:
-        try:
-            print("Please type the ID Number of the task you would like to edit.")
-            print("If you would like to return to the main menu, please type 'quit'")
-            idNumber = input()
-            #quit to menu
-            if(idNumber.rstrip().lower() == "quit" or idNumber.rstrip().lower() == 'q'):
-                return
-            if(re.match(r"\d+", idNumber) != None):
-                while True:
-                    print(df[df["id"] == int(idNumber)])
-                    index = df[df["id"] == int(idNumber)].index.item()
-                    print("Please type what element you would like to change, and press enter. If you would like to quit, please type 'quit'.")
-                    match input():
-                        case "quit":
-                            break
-                        case "q":
-                            break
-                        case "due_date":
-                            dateTime = getDate()
-                            if dateTime != "quit":
-                                df.at[index, "due_date"] = dateTime
+        print("Please type the name of the task you'd like to edit, or the ID in the format: !id")
+        print("If you would like to return to the main menu, please type 'quit'")
+        inputStr = input()
+        #quit to menu
+        if(inputStr.rstrip().lower() == "quit" or inputStr.rstrip().lower() == 'q'):
+            return df
+        if(re.match(r"!\d+", inputStr)):
+            idNumber = int(inputStr[1:])
+        else:
+            idNumber = search(inputStr, True)
+            if idNumber == "quit":
+                return df
+        while True:
+            print(df[df["id"] == int(idNumber)])
+            index = df[df["id"] == int(idNumber)].index.item()
+            print("Please type what element you would like to change, and press enter. If you would like to go back and select another task, please type 'quit'.")
+            match input():
+                case "quit":
+                    break
+                case "q":
+                    break
+                case "due_date":
+                    dateTime = getDate()
+                    if dateTime != "quit":
+                        df.at[index, "due_date"] = dateTime
+                        df.at[index, "changed"] = 1
+                case "priority":
+                    priorityNew = prioritySet()
+                    if priorityNew != "quit":
+                        df.at[index, "priority"] = priorityNew
+                        df.at[index, "changed"] = 1
+                case "name":
+                    print("Please type the new name of the task and press enter.")
+                    df.at[index,"name"] = input()
+                    df.at[index,"changed"] = 1
+                case "complete":
+                    while True:
+                        print("Please type 0 for not complete, and 1 for complete.")
+                        completionBinary = input()
+                        if(re.match(r"[0-1]", completionBinary) !=0):
+                            completionBinary = int(completionBinary)
+                            if(completionBinary == 1):
+                                df.at[index, "complete"] = 1
+                                df.at[index, "completion_date"] = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
                                 df.at[index, "changed"] = 1
-                        case "priority":
-                            priorityNew = prioritySet()
-                            if priorityNew != "quit":
-                                df.at[index, "priority"] = priorityNew
+                                break
+                            if(completionBinary == 0):
+                                df.at[index, "complete"] = 0
+                                df.at[index, "completion_date"] = None
                                 df.at[index, "changed"] = 1
-                        case "name":
-                            print("Please type the new name of the task and press enter.")
-                            df.at[index,"name"] = input()
-                            df.at[index,"changed"] = 1
-                        case "complete":
-                            while True:
-                                print("Please type 0 for not complete, and 1 for complete.")
-                                completionBinary = input()
-                                if(re.match(r"[0-1]", completionBinary) !=0):
-                                    completionBinary = int(completionBinary)
-                                    if(completionBinary == 1):
-                                        df.at[index, "complete"] = 1
-                                        df.at[index, "completion_date"] = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-                                        df.at[index, "changed"] = 1
-                                        break
-                                    if(completionBinary == 0):
-                                        df.at[index, "complete"] = 0
-                                        df.at[index, "completion_date"] = None
-                                        df.at[index, "changed"] = 1
-                                        break
-                                else:
-                                    print("That doesn't seem to be valid.")
-            else:
-                print("The ID Provided does not seem to be valid. Please try one with only numbers.")
-        except:
-            print("The ID Provided seems to be invalid.")
-            continue
-        break
-    return df
+                                break
+                        else:
+                            print("That doesn't seem to be valid.")
     
 def getDate():
     """Parses user input to obtain a date to be used in editTask/createTask"""
@@ -183,26 +180,36 @@ def completeTask(df):
     '''
     #main loop to get the ID number
     while True:
-        print("Please type the ID Number of the task to be completed and press enter.")
-        print("If you would like to return to the previous menu, please type 'quit'")
+        print("Please type the name of the task you'd like to mark as complete, or the ID in the format: !id")
+        print("If you would like to return to the main menu, please type 'quit'")
         toComplete = input()
         #exit loop
         if(toComplete.rstrip().lower() == "quit" or toComplete.rstrip().lower() == 'q'):
            return
-        #check for only numbers
-        if(re.match(r"\d+", toComplete) != None):
+        #check for only numbers + !
+        if(re.match(r"!\d+", toComplete) != None):
             #solution for getting index as an int is https://stackoverflow.com/questions/41217310/get-index-of-a-row-of-a-pandas-dataframe-as-an-integer
             #try to find id number in the dataframe
-            completedIndex = df[df["id"] == int(toComplete)].index.item()
+            completedIndex = df[df["id"] == int(toComplete[1:])].index.item()
             #for df.at functionality: https://stackoverflow.com/questions/13842088/set-value-for-particular-cell-in-pandas-dataframe-using-index
             df.at[completedIndex, "complete"] = 1
             df.at[completedIndex, "completion_date"] = datetime.datetime.today()#.strftime("%Y-%m-%d %H:%M:%S")
             df.at[completedIndex, "changed"] = 1
-            print("Task status updated.")
+            print(df.at[completedIndex, "name"],"marked as complete.")
+            time.sleep(2)
             break
         else:
-            print("Something went wrong, please try again.")
-
+            id_num = search(toComplete)
+            if id_num == "quit":
+                break
+            completedIndex = df[df["id"] == id_num].index.item()
+            #for df.at functionality: https://stackoverflow.com/questions/13842088/set-value-for-particular-cell-in-pandas-dataframe-using-index
+            df.at[completedIndex, "complete"] = 1
+            df.at[completedIndex, "completion_date"] = datetime.datetime.today()#.strftime("%Y-%m-%d %H:%M:%S")
+            df.at[completedIndex, "changed"] = 1
+            print(df.at[completedIndex, "name"],"marked as complete.")
+            time.sleep(2)
+            break
     return df
 
 def createTask(df):
@@ -337,39 +344,37 @@ def usrInput(df) -> bool:
     if(inputStr == "r" or inputStr == "remove"):
         df = removeRow(df)
         return True
-    if(inputStr == "search-all"):
-        search(True)
-        return True
-    if(inputStr == "search"):
-        search()
-        return True
     else:
        print("Input not recognized, please try again")
        usrInput(df)
     return
 
-def search(showCompleted:bool = False) -> int:
+def search(query:str, showCompleted:bool = False) -> int:
     """Function to do wildcard searches for specific things/phrases in the database. 
     Also handles what happens if there are multiple results that match, and have an abort method.
     showCompleted = True should filter out all completed results from the resulting search.
     Returns an ID."""
     while True:
-        print("Please input the name of the task you want to select and press enter to search. To go back, please input \\quit.")
-        inputstr = input()
-        if inputstr == "\\quit":
-            print("Exiting.")
-            return "quit" #not an int but many of the programs implementing this accept a string to abort.
-        results = sql.searchTable(inputstr)
+        """ not in here anymore because i'm removing the basic search stuff so it's pure backend
+        if query == '': 
+            print("Please input the name of the task you want to serach for and press enter to search. To go back, please input quit.")
+            query = input()
+            if query == "quit":
+                print("Exiting.")
+                return #return to main function"""
+        results = sql.searchTable(query)
         if(showCompleted == False):
-            results = [results["completed" == 0]] #I have no idea why this one has to be turned into a list.... code works when you don't need to do this
+            #print(results)
+            results = [x for x in results if x['completed'] == 0] #https://www.geeksforgeeks.org/python-find-dictionary-matching-value-in-list/
         if len(results) == 0:
             print("No results found. Please try again.")
+            query = ''
         elif len(results) == 1:
             task = results[0]
             break
         else:
             while True:
-                print("Multiple results found. Please type the ID of the task you want to select. Type \"quit\" to go back to the main search.")
+                print("Multiple results found. Please type the ID of the task you want to select. Type quit to go back to the main search.")
                 idList = []
                 for x in results:
                     print(str(x["id"])+":", x["name"])
@@ -387,7 +392,7 @@ def search(showCompleted:bool = False) -> int:
             if selectedID != "quit": #checking that we're not just going back up one level, but instead leaving the function all together
                 break
     #note: in the future this "reporting" section should be handled by the function calling it.
-    print("Task Selected:\nID:",str(task["id"])+"|Name:", task["name"])
+    #print("Task Selected:\nID:",str(task["id"])+"|Name:", task["name"])
     #adding pause so people can read the result
-    time.sleep(1)
+    #time.sleep(1)
     return task["id"]
