@@ -13,6 +13,16 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 #https://stackoverflow.com/questions/37288421/how-to-plot-a-chart-in-the-terminal cool idea for future implementation; output a graph/date time chart through the terminal, though could also just generate and output them like normal.
 
+def updateSQL(df) -> bool:
+    '''Updates SQL from the dataframe.'''
+    changedRows = pd.DataFrame(df[df["changed"] == 1]).to_dict("records")
+    newRows = pd.DataFrame(df[df["new"] == 1]).to_dict("records")
+    toDelete = pd.DataFrame(df[df["deletion"] == 1]).to_dict("records")
+    sql.create(newRows)
+    sql.update(changedRows)
+    sql.delete(toDelete)
+    return True
+
 def editTask(df):
     '''
     Function to edit existing task and change or add parts to it.
@@ -80,7 +90,13 @@ def editTask(df):
                                 break
                         else:
                             print("That doesn't seem to be valid.")
-    
+                case "deletion":
+                    if(df.at[index, "deletion"] == 0):
+                        print("Please use the remove function to mark this for deletion.")
+                    if(df.at[index, "deletion"] == 1):
+                        print("Task will no longer be deleted upon save.")
+                        df.at[index, "deletion"] = 0
+                    
 def getDate():
     """Parses user input to obtain a date to be used in editTask/createTask"""
     while True:
@@ -235,7 +251,9 @@ def createTask(df):
     #Now, collect all data and put it into corresponding things.
     print("Task Name: ", taskName, ", Due Date:", taskDate,", Priority Level: ", priorityLevel)
     addRow(df, taskName, taskDate, priorityLevel)
-    print("Task Added. Returning to main view.")
+    print("Task Added. Saving.")
+    updateSQL(df)
+    print("Returning to menu.")
     return df
 
 def addRow(df, name, date = None, priority = 0):
@@ -259,23 +277,18 @@ def deleteRow(df, id):
 def removeRow(df) -> pd.DataFrame:
     '''GUI/TUI version of accessing deleteRow'''
     while True:
-        print("Please input the ID number of the task you'd like to delete, or input quit to go back to the main menu.\n !!! WARNING: THIS CANNOT BE UNDONE. !!!")
+        print("Please input the name or ID number (prefixed with !) of the task you'd like to mark for deletion upon saving. \nTo go back to the main menu, input quit. \n !!! WARNING: ONCE THE TASK IS DELETED, IT CANNOT BE RECOVERED. !!!\nIf you need to undo this change, please use the edit function to change it.")
         toRemove = input()
-        #quit to menu
         if(toRemove.rstrip().lower() == "quit" or toRemove.rstrip().lower() == 'q'):
-            return
-        if(re.match(r"\d+", toRemove) != None):
-            return deleteRow(df, int(toRemove))
-
-def updateSQL(df) -> bool:
-    '''Updates SQL from the dataframe.'''
-    changedRows = pd.DataFrame(df[df["changed"] == 1]).to_dict("records")
-    newRows = pd.DataFrame(df[df["new"] == 1]).to_dict("records")
-    toDelete = pd.DataFrame(df[df["deletion"] == 1]).to_dict("records")
-    sql.create(newRows)
-    sql.update(changedRows)
-    sql.delete(toDelete)
-    return True
+            return df
+        if(re.match(r"!\d+", toRemove)):
+            idNumber = int(toRemove[1:])
+        else:
+            idNumber = search(toRemove, True)
+            print(idNumber)
+            if idNumber == "quit":
+                return df
+        return deleteRow(df, int(idNumber))
 
 def usrInput(df) -> bool:
     '''
@@ -297,12 +310,12 @@ def usrInput(df) -> bool:
         df=completeTask(df)
         #print("C")
         return True
-    #incomplete
+    #complete
     if(inputStr == "e" or inputStr == "edit"):
         #print("E")
         df=editTask(df)
         return True
-    #incomplete
+    #complete
     if(inputStr == "q" or inputStr == "quit"):
         #print("Q")
         autoSaveFlag = updateSQL(df)
@@ -311,7 +324,7 @@ def usrInput(df) -> bool:
         else:
             print("Have a nice day! :)")
         return False
-    #incomplete
+    #complete
     if(inputStr == "h" or inputStr == "help"):
         print("List of commands:")
         print("You can just input the first letter of each command as well.")
@@ -324,6 +337,7 @@ def usrInput(df) -> bool:
             "Help: Display this message.",
             "Quit: Exit the program."
         ]
+        time.sleep(2)
         #iterate through command list and print each string
         for x in commandList:
             print(x)
@@ -381,8 +395,11 @@ def search(query:str, showCompleted:bool = False) -> int:
                     idList.append(x["id"])
                 selectedID = input()
                 if selectedID == "quit":
-                    break
-                if int(selectedID) in idList:
+                    print("quit detected")
+                    return "quit"
+                elif(re.match(r"(?!\d+)", selectedID)):
+                    print("That doesn't seem right.")
+                elif int(selectedID) in idList:
                     task = results[idList.index(int(selectedID))]
                     #explaination as to why this^ works: we append the values of the IDs in the index in the same order as the results list 
                     #so we can just use the index to find the dictionary with the same ID value 
@@ -392,7 +409,7 @@ def search(query:str, showCompleted:bool = False) -> int:
             if selectedID != "quit": #checking that we're not just going back up one level, but instead leaving the function all together
                 break
     #note: in the future this "reporting" section should be handled by the function calling it.
-    #print("Task Selected:\nID:",str(task["id"])+"|Name:", task["name"])
+    print("Task Selected:\nID:",str(task["id"])+"|Name:", task["name"])
     #adding pause so people can read the result
     #time.sleep(1)
     return task["id"]

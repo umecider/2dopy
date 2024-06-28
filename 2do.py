@@ -25,6 +25,7 @@ def mainView(df):
         displayTasks = pd.DataFrame(df.sort_values(["due_date", "priority"], ascending=[True, False]))
         displayTasks.drop(columns = ["changed", "new", "completion_date"], inplace = True)
         displayTasks.set_index("id", inplace=True)
+        displayTasks.drop(displayTasks[displayTasks["deletion"] == 1].index, inplace=True)
         colReorder = ["name", "priority", "due_date", "complete"]
         displayTasks = displayTasks[colReorder]
         if(SHOW_COMPLETED == False):
