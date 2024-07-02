@@ -1,0 +1,5 @@
+#requirements, run with pip install -r requirements.txt
+tabulate
+python-dateutil
+pandas
+sqlite3
