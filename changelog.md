@@ -38,3 +38,6 @@ also need to handle bad input after it (type ! in search for complete and then q
 implemented search into complete and edit tasks
 
 need to update edit task to only show editable fields instead of all fields (and maybe throw that into a tabulate table)
+
+7/2/24:
+Search should be totally functional now.
