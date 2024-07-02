@@ -10,7 +10,7 @@ First, make sure your pyton environment has the following libraries installed:
 - sqlite3
 - tabulate
 
-If you do not have any of these, you can install them easily using pip ("python -m pip install [name]")
+If you do not have any of these, you can install them easily using pip ("python -m pip install [name]" or by running the requirements.txt file using "python -m pip install -r "requirements.txt" ")
 
 To use this program, open a terminal and navigate to the folder where the program is located. Then, simply run the program with your local python directory. The program will create a new local SQL database in the same location. Commands are input either by inputting the first letter of the command, or the whole command. The following commands are implemented: 
 
