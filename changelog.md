@@ -23,3 +23,21 @@
 refactoring code. SQL and Dataframe files/functions have been made/converted. Need to overhaul how the CML arguments work.
 Need to finalize how to work with datetimes - at the moment, considering storing and working with them in string format in the dataframe, and converting if/when it is needed.
 The alternative is only working in timestamps - this would be easier as the conversion just needs to happen upon startup and when pulling from SQL. However, if they aren't used, a bit of performance is lost. Regardless right now I'm working with both which is less than ideal.
+
+5/20/24:
+Finished up basic search function - it works great on the home page but I'll need to split it such that you can call the search function without the frills of search(). So like you'd be able to hook into it while handling input recognition on the function side (ie - edit/complete)
+on that note - should really figure out a way to get both ID and search going. Thinking of having the user format the id input in a specific way to prevent accidental search stuff. *! both seem like decent options, #$%@ are bad, and ^& are questionable. {} should be fine, () and [] are probably less fine.
+Just thinking of what I've seen people name their stuff - plus I'd prefer the user doesn't have to spend the extra time to wrap the numbers given they're a power user (especially if they're keeping the ID number around) - personally in favor of *id for searching thoug
+
+Maybe it would be good to add a filter for the ID column in the main view too... for a super minimalist task table....
+
+5/21/24
+Decided on ! to be the thing used for determining if ID is there or not - Need to filter out results since just doing ! results in a search which returns all tasks lol (not good)
+also need to handle bad input after it (type ! in search for complete and then quit and then qui and it errors)
+
+implemented search into complete and edit tasks
+
+need to update edit task to only show editable fields instead of all fields (and maybe throw that into a tabulate table)
+
+7/2/24:
+Search should be totally functional now.

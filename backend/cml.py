@@ -97,6 +97,9 @@ def parseArgs(args, parser):
         print("Tasks Deleted:")
         for task in tasks:
             print("ID:", task["id"], "|Name:", task["name"])
+#search
+    if(args.search == True):
+        sql.searchTable(args.name[0])
 #args show and all. To run last.
     if(args.show == True):
         #this is stolen from mainView() but slightly modified to work with the args

@@ -1,5 +1,5 @@
 
-from backend.sql import createDF, initialize_table
+from backend.sql import createDF, initialize_table, searchTable
 from backend.dataframe import usrInput, updateSQL
 from backend.cml import parseArgs
 import pandas as pd
@@ -25,6 +25,7 @@ def mainView(df):
         displayTasks = pd.DataFrame(df.sort_values(["due_date", "priority"], ascending=[True, False]))
         displayTasks.drop(columns = ["changed", "new", "completion_date"], inplace = True)
         displayTasks.set_index("id", inplace=True)
+        displayTasks.drop(displayTasks[displayTasks["deletion"] == 1].index, inplace=True)
         colReorder = ["name", "priority", "due_date", "complete"]
         displayTasks = displayTasks[colReorder]
         if(SHOW_COMPLETED == False):
@@ -73,7 +74,8 @@ parser.add_argument("-n","--new", action = "store_true", help = "Create new task
 parser.add_argument("-e", "--edit", action = "store_true", help = "Edit a task based on ID number. REQUIRES the -i ARGUMENT. Use -t, -d and -p to edit the respective values. You can also pass -c without an ID modifier to change the completion status.")
 parser.add_argument("-c","--complete", action = "store_true", help = "Mark the task with the ID passed as complete. REQUIRES THE -i ARGUMENT UNLESS BEING USED WITH -e")
 parser.add_argument("-r","--remove", action = "store_true", help = "Remove a task from the database. REQUIRES THE -i ARGUMENT.")
-parser.add_argument("-s","--show", action="store_true", help = "Display the table of tasks to be completed. Will run after any other flags have been passed. Pass -a to show all tasks.")
+parser.add_argument("-s", "--search", action="store_true", help = "Searches the database for a given task name. REQUIRES THE -t ARGUMENT.")
+parser.add_argument("-sh","--show", action="store_true", help = "Display the table of tasks to be completed. Will run after any other flags have been passed. Pass -a to show all tasks.")
 parser.add_argument("-i", "--ID", nargs = "+", type = int, help = "Adds an ID modifier. Used with -e, -c, and -r. Multiple can be passed to -c and -r")
 parser.add_argument("-t", "--task-name", nargs = "+", dest="name", action = "extend", help = "Adds a task name modifier. Used in conjunction with -e and -n.")
 parser.add_argument("-d","--date",nargs=1, help = "Add date to a task in the format MM/DD/YY. Used in conjunction with -n and -e") #can probably also use this with edit
@@ -113,6 +115,9 @@ else:
     #new task created but no title passed
     if (args.new == True and args.name == None):
         parser.error("-n requires a -t modifier to create a task!")
+    #search but no title passed
+    if (args.search == True and args.name == None):
+        parser.error("-s requires a -t modifier to search for a task!")
     #default complete flag passed without edit
     if (args.complete == True and args.edit == False and args.ID == None):
         parser.error("-c must be passed with an ID number using the -i modifier!")

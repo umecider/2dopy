@@ -13,6 +13,16 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 #https://stackoverflow.com/questions/37288421/how-to-plot-a-chart-in-the-terminal cool idea for future implementation; output a graph/date time chart through the terminal, though could also just generate and output them like normal.
 
+def updateSQL(df) -> bool:
+    '''Updates SQL from the dataframe.'''
+    changedRows = pd.DataFrame(df[df["changed"] == 1]).to_dict("records")
+    newRows = pd.DataFrame(df[df["new"] == 1]).to_dict("records")
+    toDelete = pd.DataFrame(df[df["deletion"] == 1]).to_dict("records")
+    sql.create(newRows)
+    sql.update(changedRows)
+    sql.delete(toDelete)
+    return True
+
 def editTask(df):
     '''
     Function to edit existing task and change or add parts to it.
@@ -27,18 +37,23 @@ def editTask(df):
     3 Update values for task, exit loop and function
     '''
     while True:
-        try:
-            print("Please type the ID Number of the task you would like to edit.")
-            print("If you would like to return to the main menu, please type 'quit'")
-            idNumber = input()
-            #quit to menu
-            if(idNumber.rstrip().lower() == "quit" or idNumber.rstrip().lower() == 'q'):
-                return
-            if(re.match(r"\d+", idNumber) != None):
+        print("Please type the name of the task you'd like to edit, or the ID in the format: !id")
+        print("If you would like to return to the main menu, please type 'quit'")
+        inputStr = input()
+        #quit to menu
+        if(inputStr.rstrip().lower() == "quit" or inputStr.rstrip().lower() == 'q'):
+            return df
+        if(re.match(r"!\d+", inputStr)):
+            idNumber = int(inputStr[1:])
+        else:
+            idNumber = search(inputStr, True)
+            if idNumber == "quit":
+                return df
+            if idNumber != -1:
                 while True:
                     print(df[df["id"] == int(idNumber)])
                     index = df[df["id"] == int(idNumber)].index.item()
-                    print("Please type what element you would like to change, and press enter. If you would like to quit, please type 'quit'.")
+                    print("Please type what element you would like to change, and press enter. If you would like to go back and select another task, please type 'quit'.")
                     match input():
                         case "quit":
                             break
@@ -76,16 +91,15 @@ def editTask(df):
                                         break
                                 else:
                                     print("That doesn't seem to be valid.")
-            else:
-                print("The ID Provided does not seem to be valid. Please try one with only numbers.")
-        except:
-            print("The ID Provided seems to be invalid.")
-            continue
-        break
-    return df
-    
+                        case "deletion":
+                            if(df.at[index, "deletion"] == 0):
+                                print("Please use the remove function to mark this for deletion.")
+                            if(df.at[index, "deletion"] == 1):
+                                print("Task will no longer be deleted upon save.")
+                                df.at[index, "deletion"] = 0
+                            
 def getDate():
-    #making this it's own function because I'm using it multiple times.
+    """Parses user input to obtain a date to be used in editTask/createTask"""
     while True:
         try:
             print("Please type the date the task is due in MM/DD/YY format, and the time it's due and press enter.")
@@ -135,6 +149,7 @@ def getDate():
     return taskDate
 
 def prioritySet():
+    '''Gets the user's input to assign a priority in editTask/createTask'''
     while True:
         print("Please type the priority of the task from 1-5. and press enter.")
         print("If you do not want to set a priority level, simply press enter.")
@@ -182,26 +197,37 @@ def completeTask(df):
     '''
     #main loop to get the ID number
     while True:
-        print("Please type the ID Number of the task to be completed and press enter.")
-        print("If you would like to return to the previous menu, please type 'quit'")
+        print("Please type the name of the task you'd like to mark as complete, or the ID in the format: !id")
+        print("If you would like to return to the main menu, please type 'quit'")
         toComplete = input()
         #exit loop
         if(toComplete.rstrip().lower() == "quit" or toComplete.rstrip().lower() == 'q'):
            return
-        #check for only numbers
-        if(re.match(r"\d+", toComplete) != None):
+        #check for only numbers + !
+        if(re.match(r"!\d+", toComplete) != None):
             #solution for getting index as an int is https://stackoverflow.com/questions/41217310/get-index-of-a-row-of-a-pandas-dataframe-as-an-integer
             #try to find id number in the dataframe
-            completedIndex = df[df["id"] == int(toComplete)].index.item()
+            completedIndex = df[df["id"] == int(toComplete[1:])].index.item()
             #for df.at functionality: https://stackoverflow.com/questions/13842088/set-value-for-particular-cell-in-pandas-dataframe-using-index
             df.at[completedIndex, "complete"] = 1
             df.at[completedIndex, "completion_date"] = datetime.datetime.today()#.strftime("%Y-%m-%d %H:%M:%S")
             df.at[completedIndex, "changed"] = 1
-            print("Task status updated.")
+            print(df.at[completedIndex, "name"],"marked as complete.")
+            time.sleep(2)
             break
         else:
-            print("Something went wrong, please try again.")
-
+            id_num = search(toComplete)
+            if id_num == "quit":
+                break
+            elif id_num != -1:
+                completedIndex = df[df["id"] == id_num].index.item()
+                #for df.at functionality: https://stackoverflow.com/questions/13842088/set-value-for-particular-cell-in-pandas-dataframe-using-index
+                df.at[completedIndex, "complete"] = 1
+                df.at[completedIndex, "completion_date"] = datetime.datetime.today()#.strftime("%Y-%m-%d %H:%M:%S")
+                df.at[completedIndex, "changed"] = 1
+                print("Task \"",df.at[completedIndex, "name"],"\" has been marked as complete.")
+                time.sleep(2)
+                break
     return df
 
 def createTask(df):
@@ -227,10 +253,13 @@ def createTask(df):
     #Now, collect all data and put it into corresponding things.
     print("Task Name: ", taskName, ", Due Date:", taskDate,", Priority Level: ", priorityLevel)
     addRow(df, taskName, taskDate, priorityLevel)
-    print("Task Added. Returning to main view.")
+    print("Task Added. Saving.")
+    updateSQL(df)
+    print("Returning to menu.")
     return df
 
 def addRow(df, name, date = None, priority = 0):
+    '''Adds a row into the dataframe'''
     index = len(df) - 1
     if (index < 0):
         idNumber = 1
@@ -240,6 +269,7 @@ def addRow(df, name, date = None, priority = 0):
     return
 
 def deleteRow(df, id):
+    '''Mark row to be removed from the database'''
     index = df[df["id"] == int(id)].index.item()
     #print(index)
     #print(df)
@@ -247,24 +277,24 @@ def deleteRow(df, id):
     return df
 
 def removeRow(df) -> pd.DataFrame:
+    '''GUI/TUI version of accessing deleteRow'''
     while True:
-        print("Please input the ID number of the task you'd like to delete, or input quit to go back to the main menu.\n !!! WARNING: THIS CANNOT BE UNDONE. !!!")
+        print("Please input the name or ID number (prefixed with !) of the task you'd like to mark for deletion upon saving. \nTo go back to the main menu, input quit. \n !!! WARNING: ONCE THE TASK IS DELETED, IT CANNOT BE RECOVERED. !!!\nIf you need to undo this change, please use the edit function to change it.")
         toRemove = input()
-        #quit to menu
         if(toRemove.rstrip().lower() == "quit" or toRemove.rstrip().lower() == 'q'):
-            return
-        if(re.match(r"\d+", toRemove) != None):
-            return deleteRow(df, int(toRemove))
-
-def updateSQL(df) -> bool:
-    #Updates SQL from the dataframe.
-    changedRows = pd.DataFrame(df[df["changed"] == 1]).to_dict("records")
-    newRows = pd.DataFrame(df[df["new"] == 1]).to_dict("records")
-    toDelete = pd.DataFrame(df[df["deletion"] == 1]).to_dict("records")
-    sql.create(newRows)
-    sql.update(changedRows)
-    sql.delete(toDelete)
-    return True
+            return df
+        if(re.match(r"!\d+", toRemove)):
+            idNumber = int(toRemove[1:])
+        else:
+            idNumber = search(toRemove, True)
+            #print(idNumber)
+            if idNumber == "quit":
+                return df
+        if idNumber != -1:
+            removeID = df[df["id"] == idNumber].index.item()
+            print("Task \"",df.at[removeID, "name"],"\" will be deleted upon saving.", sep='')
+            time.sleep(2)
+            return deleteRow(df, int(idNumber))
 
 def usrInput(df) -> bool:
     '''
@@ -286,12 +316,12 @@ def usrInput(df) -> bool:
         df=completeTask(df)
         #print("C")
         return True
-    #incomplete
+    #complete
     if(inputStr == "e" or inputStr == "edit"):
         #print("E")
         df=editTask(df)
         return True
-    #incomplete
+    #complete
     if(inputStr == "q" or inputStr == "quit"):
         #print("Q")
         autoSaveFlag = updateSQL(df)
@@ -300,7 +330,7 @@ def usrInput(df) -> bool:
         else:
             print("Have a nice day! :)")
         return False
-    #incomplete
+    #complete
     if(inputStr == "h" or inputStr == "help"):
         print("List of commands:")
         print("You can just input the first letter of each command as well.")
@@ -313,6 +343,7 @@ def usrInput(df) -> bool:
             "Help: Display this message.",
             "Quit: Exit the program."
         ]
+        #time.sleep(2)
         #iterate through command list and print each string
         for x in commandList:
             print(x)
@@ -337,3 +368,47 @@ def usrInput(df) -> bool:
        print("Input not recognized, please try again")
        usrInput(df)
     return
+
+def search(query:str, showCompleted:bool = False) -> int:
+    """Function to do wildcard searches for specific things/phrases in the database. 
+    Also handles what happens if there are multiple results that match, and have an abort method.
+    showCompleted = True should filter out all completed results from the resulting search.
+    Returns an ID, the string quit if a user wants to stop searching, or -1 if no results are found."""
+    while True:
+        results = sql.searchTable(query)
+        if(showCompleted == False):
+            #print(results)
+            results = [x for x in results if x['completed'] == 0] #https://www.geeksforgeeks.org/python-find-dictionary-matching-value-in-list/
+        if len(results) == 0 or query.strip() == '':
+            print("No results found. Please try again.")
+            return -1
+        elif len(results) == 1:
+            task = results[0]
+            break
+        else:
+            while True:
+                print("Multiple results found. Please type the ID of the task you want to select. Type quit to go back to the main search.")
+                idList = []
+                for x in results:
+                    print(str(x["id"])+":", x["name"])
+                    idList.append(x["id"])
+                selectedID = input()
+                if selectedID == "quit":
+                    print("Returning to main menu.")
+                    return "quit"
+                elif(re.match(r"(?!\d+)", selectedID)):
+                    print("That doesn't seem right.")
+                elif int(selectedID) in idList:
+                    task = results[idList.index(int(selectedID))]
+                    #explaination as to why this^ works: we append the values of the IDs in the index in the same order as the results list 
+                    #so we can just use the index to find the dictionary with the same ID value 
+                    break
+                else:
+                    print("TaskID not found.")
+            if selectedID != "quit": #checking that we're not just going back up one level, but instead leaving the function all together
+                break
+    #note: in the future this "reporting" section should be handled by the function calling it.
+    #print("Task Selected:\nID:",str(task["id"])+"|Name:", task["name"])
+    #adding pause so people can read the result
+    #time.sleep(1)
+    return task["id"]
